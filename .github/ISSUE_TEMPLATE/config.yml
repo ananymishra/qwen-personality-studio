@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Web Studio (no GitHub account needed)
+    url: https://ananymishra.github.io/qwen-personality-studio/studio/
+    about: Browse the registry, stack neurons with dose sliders, and rate stacks in the browser — verdicts filed from there arrive prefilled.
+  - name: Question or discussion
+    url: https://github.com/ananymishra/qwen-personality-studio/discussions
+    about: Ideas, method questions, and walk-through posts live in Discussions.

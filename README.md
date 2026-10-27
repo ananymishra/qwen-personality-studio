@@ -29,6 +29,11 @@ circuits, anime sidekicks. Push one coordinate at inference time and the model's
   <img src="docs/assets/pipeline.svg" alt="Animated diagram: a prompt flows through Qwen's layers; at layer 14 neuron 8949 a residual-normalized delta is injected by a forward pre-hook on down_proj, and the output changes from a plain assistant to Evil Qwen" width="100%">
 </div>
 
+<div align="center">
+  <img src="docs/assets/studio-hero.png" alt="The Web Studio — the neuron map, the registry with screened/candidate/stack badges, and the stacks filter" width="100%">
+  <p class="mono"><a href="https://ananymishra.github.io/qwen-personality-studio/studio/"><b>Open the live Web Studio →</b></a> — no install, no backend, everything runs from this repo</p>
+</div>
+
 This repo is the shared home for those discoveries: a canonical [`personalities.json`](personalities.json)
 dataset, a **web studio** with a mixing sandbox, a **Python steering library** with hook plumbing and a
 daemon client, and a contribution workflow so the registry keeps growing as people scan deeper layers.
