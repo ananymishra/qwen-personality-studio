@@ -6,6 +6,7 @@
 
 <div align="center">
 
+[![CI](https://github.com/ananymishra/qwen-personality-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/ananymishra/qwen-personality-studio/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Live Studio](https://img.shields.io/badge/Live-Web_Studio-4b3bb0.svg)](https://ananymishra.github.io/qwen-personality-studio/studio/)
