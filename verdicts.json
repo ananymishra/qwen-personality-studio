@@ -1,0 +1,5 @@
+{
+  "schema_version": "1.0",
+  "notes": "Community verdicts for steering stacks. A verdict answers one question: did this exact stack produce the intended persona coherently, or not? 'good' = usable persona output; 'bad' = degenerate, garbled, incoherent, or no visible effect. Stacks are keyed lightning-fast: components sorted by (layer, neuron), each rendered L{layer}N{neuron}{+/-}{dose}, joined with ';'. Contribute by editing this file in a PR, or by filing an issue report from the Studio.",
+  "verdicts": []
+}

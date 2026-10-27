@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" class="motion">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Personality Studio — neurons in the weights of an open-weights mind</title>
+    <meta name="description" content="A growing community registry of single-neuron activation-steering personas for Qwen LLMs. Browse the registry, mix neurons in a sandbox, rate what works, and export ready-to-run steering payloads.">
+    <meta property="og:title" content="Qwen Personality Studio"/>
+    <meta property="og:description" content="Push one MLP neuron. Get a whole new character. No fine-tuning, no system prompt."/>
+    <meta property="og:type" content="website"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        (function () {
+            var h = document.documentElement;
+            if (!matchMedia('(prefers-reduced-motion: reduce)').matches) h.classList.add('motion');
+        })();
+    </script>
+    <style>
+        :root {
+            --bg: #f1f1ec; --bg-alt: #e8e8e1; --fg: #121316; --ink-rgb: 18,19,22;
+            --muted: #5b5e66; --faint: #8a8d94;
+            --line: rgba(18, 19, 22, .14); --line-strong: rgba(18, 19, 22, .30);
+            --accent: #4b3bb0; --accent-ink: #fff;
+            --up: #1f6f4a; --down: #a4321f;
+            --font-display: "Archivo", system-ui, sans-serif;
+            --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+            --ease-out: cubic-bezier(.16, 1, .3, 1);
+            --header-h: 4.25rem; --gutter: clamp(1rem, .55rem + 1.8vw, 2.5rem);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-display); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+        a { color: inherit; }
+        ::selection { background: var(--accent); color: var(--accent-ink); }
+        ::-webkit-scrollbar { width: 10px; } ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(18,19,22,.25); border: 3px solid var(--bg); border-radius: 6px; }
+        .mono { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .01em; }
+        .kicker { font-family: var(--font-mono); font-size: .6875rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+        .site-header { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--header-h); padding-inline: var(--gutter); display: flex; align-items: center; justify-content: space-between; background: color-mix(in srgb, var(--bg) 97%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); }
+        .brand { display: inline-flex; align-items: center; gap: .65rem; text-decoration: none; }
+        .brand__mark { position: relative; width: 30px; height: 30px; border: 1px solid var(--line-strong); display: grid; place-items: center; background: var(--bg-alt); }
+        .brand__cell { width: 8px; height: 8px; background: var(--accent); animation: cellpulse 2.6s cubic-bezier(.16, 1, .3, 1) infinite; }
+        @keyframes cellpulse { 0%, 100% { transform: scale(.7); opacity: .55; } 50% { transform: scale(1.15); opacity: 1; } }
+        .brand__name { font-weight: 700; font-size: .95rem; letter-spacing: -.01em; }
+        .brand__name small { display: block; font-family: var(--font-mono); font-weight: 500; font-size: .625rem; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem 1.1rem; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); font-size: .8125rem; font-weight: 600; text-decoration: none; transition: background .25s, color .25s, border-color .25s, transform .25s var(--ease-out); }
+        .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); transform: translateY(-1px); }
+        .btn--ghost { background: transparent; color: var(--fg); border-color: var(--line-strong); }
+        .btn--ghost:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+        .btn--sm { padding: .35rem .75rem; font-size: .75rem; }
+
+        main { padding-top: var(--header-h); }
+        section { border-bottom: 1px solid var(--line); padding: clamp(2rem, 4vw, 3.5rem) var(--gutter); }
+        .hero h1 { margin: .3em 0 0; font-size: clamp(2.6rem, 1rem + 7vw, 6.2rem); font-weight: 800; line-height: .97; letter-spacing: -.028em; }
+        .hero h1 em { font-style: normal; color: var(--accent); }
+        .hero__sub { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.25rem 3rem; margin-top: 1.6rem; }
+        .hero__lede { max-width: 38rem; color: var(--muted); font-size: .95rem; margin: 0; }
+        .hero__actions { display: flex; flex-direction: column; align-items: flex-start; gap: .8rem; }
+        .hero__target { color: var(--faint); letter-spacing: .14em; text-transform: uppercase; margin: 0; }
+        .cta-row { display: flex; gap: .75rem; flex-wrap: wrap; }
+        .panels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+        @media (max-width: 900px) { .panels { grid-template-columns: 1fr; } }
+        .panel { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 1.6rem 1.5rem; transition: background .2s; }
+        .panel:hover { background: var(--bg-alt); }
+        .panel h3 { margin: .9rem 0 .45rem; font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; }
+        .panel p { margin: 0; font-size: .82rem; color: var(--muted); }
+        .panel a.more { display: inline-flex; gap: .45em; align-items: center; margin-top: .9rem; font-size: .75rem; font-weight: 600; text-decoration: none; color: var(--accent); }
+        .panel a.more:hover { text-decoration: underline; text-underline-offset: 3px; }
+        .panel i { font-style: normal; color: var(--accent); font-size: 1rem; }
+        .section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: 1.25rem; }
+        .section-head h2 { margin: 0; font-size: clamp(1.4rem, 1rem + 1.6vw, 2.2rem); font-weight: 700; letter-spacing: -.02em; }
+        .motif { position: relative; height: 120px; overflow: hidden; }
+        .map { position: relative; height: clamp(280px, 46vh, 430px); border: 1px solid var(--line-strong); background: var(--bg-alt); cursor: crosshair; overflow: hidden; }
+        .map canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+        .map-cap { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: baseline; padding: .55rem .9rem; border: 1px solid var(--line-strong); border-top: 0; }
+        .map-cap .mono { color: var(--faint); font-size: .6875rem; letter-spacing: .1em; }
+        footer { padding: 1.4rem var(--gutter) 2.4rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; }
+        footer .mono { color: var(--faint); }
+        footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+        footer a:hover { color: var(--accent); }
+        .motion .reveal { opacity: 0; transform: translateY(14px); animation: reveal .7s var(--ease-out) forwards; }
+        .motion .reveal.d1 { animation-delay: .08s; } .motion .reveal.d2 { animation-delay: .16s; } .motion .reveal.d3 { animation-delay: .24s; }
+        @keyframes reveal { to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .motion * { animation: none !important; } }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="index.html" aria-label="Qwen Personality Studio home">
+            <span class="brand__mark" aria-hidden="true"><span class="brand__cell"></span></span>
+            <span class="brand__name">Personality Studio<small>Qwen steering lab</small></span>
+        </a>
+        <nav style="display:flex; align-items:center; gap:.75rem;">
+            <a class="btn btn--ghost btn--sm" href="https://github.com/ananymishra/qwen-personality-studio" target="_blank" rel="noopener">GitHub</a>
+            <a class="btn btn--sm" href="studio/">Open the Studio</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <p class="kicker reveal">Activation steering · Mechanistic interpretability</p>
+            <h1 class="reveal">Push one neuron.<br>Get a whole<br><em>new mind.</em></h1>
+            <div class="hero__sub reveal d1">
+                <p class="hero__lede">
+                    Single MLP neurons in Qwen3.5-4B encode full personas — cartoon mascots, cosmic oracles, Microsoft-branded circuits.
+                    Inject one residual-normalized delta at inference time and the model's entire character changes.
+                    This repository is the community registry where those discoveries live: add the neurons you find,
+                    stack any combination in the sandbox for ready-to-run exports, and see the community verdicts
+                    on which mixes actually worked.
+                </p>
+                <div class="hero__actions">
+                    <p class="mono hero__target">Target · Qwen3.5-4B · MLP · down_proj input</p>
+                    <div class="cta-row">
+                        <a class="btn" href="studio/">Open the Studio</a>
+                        <a class="btn btn--ghost" href="https://github.com/ananymishra/qwen-personality-studio#option-2-python-quickstart">Python quickstart</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section style="padding-bottom: clamp(2rem, 4vw, 3.5rem);">
+            <div class="section-head reveal"><h2>Where the personas live</h2><span class="mono">one mark per discovered neuron · hover to probe</span></div>
+            <div class="map reveal d1" aria-label="Interactive map of discovered persona neurons across Qwen's layers"><canvas id="mapCv"></canvas></div>
+            <div class="map-cap reveal d2 mono">
+                <span><span style="color:var(--accent);">■</span> persona neuron · <span style="color:var(--faint);">■</span> dark neuron · hover to probe a coordinate</span>
+                <span>MLP · down_proj input · L0 → L26</span>
+            </div>
+        </section>
+
+        <section>
+            <div class="section-head reveal"><h2>What's inside</h2><span class="mono">MIT · python ≥ 3.10 · transformers ≥ 4.40</span></div>
+            <div class="panels reveal d1">
+                <div class="panel">
+                    <i>◌</i>
+                    <h3>The Registry</h3>
+                    <p>A growing roster of community-discovered archetypes — Evil Qwen, Yuki-Chan, Cosmic Unicorn, Fate &amp; Destiny — each pinned to an exact layer/neuron coordinate, dose, and mode.</p>
+                    <a class="more" href="personalities.json">personalities.json →</a>
+                </div>
+                <div class="panel">
+                    <i>◫</i>
+                    <h3>The Sandbox</h3>
+                    <p>Stack any number of neurons, drag dose sliders from −2.0 to +2.0, then export the exact JSON, cURL, and Python needed to reproduce your mix. Stacks are nonlinear — so the community rates every shared combo.</p>
+                    <a class="more" href="studio/">Open the studio →</a>
+                </div>
+                <div class="panel">
+                    <i>≡</i>
+                    <h3>Steer in Python</h3>
+                    <p><b class="mono" style="font-size:.72rem;">qwen_steering</b> handles residual-norm calibration and hook plumbing — steer by persona id or raw coordinates, and mix as many neurons as you like.</p>
+                    <a class="more" href="https://github.com/ananymishra/qwen-personality-studio#option-2-python-quickstart">Quickstart →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <span class="mono">MIT LICENSE · RESEARCH TOOL — NOT FOR RAW DEPLOYMENT</span>
+        <span class="mono">THE NEURON MAZE IS MEANT FOR YOU — <a href="studio/">FIND THE CENTER</a></span>
+        <span class="mono">BUILT BY THE COMMUNITY FOR <a href="https://github.com/QwenLM/Qwen3">QWEN</a> · INSPIRED BY THE SINGLE-NEURON DISCOVERIES OF <a href="https://x.com/treetowntree" target="_blank" rel="noopener">@TREETOWNTREE</a></span>
+    </footer>
+
+    <script>
+        (function () {
+            const cv = document.getElementById('mapCv'), ctx = cv.getContext('2d');
+            const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let W, H, dpr, rails = [], maxLayer = 26, nodes = [], links = [], pulse = null;
+            let mx = -1, my = -1, probe = null;
+
+            function railX(layer) {
+                const pad = 34;
+                return pad + (layer / maxLayer) * (W - pad * 2);
+            }
+
+            function size() {
+                dpr = Math.min(devicePixelRatio || 1, 2);
+                W = cv.clientWidth; H = cv.clientHeight;
+                cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+                rails = [];
+                for (let l = 0; l <= maxLayer; l++) rails.push(l);
+                if (nodes.length) layout();
+            }
+
+            function layout() {
+                nodes.forEach(d => {
+                    d.x = railX(d.layer) + (d.jitter - .5) * 14;
+                    d.y = H * (.13 + .74 * d.fy);
+                });
+                // synapse links: each neuron to its two nearest neighbors
+                links = [];
+                const maxDist = Math.max(W / 18, 56);
+                for (let i = 0; i < nodes.length; i++) {
+                    const cand = [];
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
+                        const d2 = dx * dx + dy * dy;
+                        if (d2 < maxDist * maxDist) cand.push([j, d2]);
+                    }
+                    cand.sort((a, b) => a[1] - b[1]);
+                    for (let k = 0; k < Math.min(2, cand.length); k++) links.push([i, cand[k][0]]);
+                }
+            }
+
+            function drew(now) { draw(now); }
+            function draw(now) {
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.clearRect(0, 0, W, H);
+                const s = now / 1000;
+
+                // layer rails + labels
+                rails.forEach(l => {
+                    const x = railX(l);
+                    ctx.strokeStyle = l % 4 === 0 ? 'rgba(18,19,22,.10)' : 'rgba(18,19,22,.045)';
+                    ctx.beginPath(); ctx.moveTo(x, 8); ctx.lineTo(x, H - 26); ctx.stroke();
+                    if (l % 4 === 0) {
+                        ctx.fillStyle = 'rgba(18,19,22,.30)';
+                        ctx.font = '500 10px "IBM Plex Mono", monospace';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('L' + l, x, H - 10);
+                    }
+                });
+
+                // synapse links
+                ctx.lineWidth = 1;
+                for (const [a, b] of links) {
+                    const A = nodes[a], B = nodes[b];
+                    ctx.strokeStyle = 'rgba(18,19,22,.09)';
+                    ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
+                }
+
+                // neurons
+                nodes.forEach(d => {
+                    const breathe = d.lit
+                        ? .62 + .33 * Math.sin(s * 1.5 + d.off)
+                        : .20 + .08 * Math.sin(s * .9 + d.off * 2.2);
+                    ctx.fillStyle = d.lit ? 'rgba(75,59,176,' + breathe + ')' : 'rgba(18,19,22,' + breathe + ')';
+                    const w = d.lit ? 4 : 3, h = d.lit ? 9 : 7;
+                    ctx.fillRect(d.x - w / 2, d.y - h / 2, w, h);
+                });
+
+                // probe: nearest neuron under the cursor
+                probe = null;
+                if (mx >= 0) {
+                    let best = null, bd = 46 * 46;
+                    for (const d of nodes) {
+                        const dx = d.x - mx, dy = d.y - my, dd = dx * dx + dy * dy;
+                        if (dd < bd) { bd = dd; best = d; }
+                    }
+                    probe = best;
+                    if (probe) {
+                        ctx.strokeStyle = 'rgba(75,59,176,.85)';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath(); ctx.arc(probe.x, probe.y, 8, 0, Math.PI * 2); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(probe.x - 12, probe.y); ctx.lineTo(probe.x - 9, probe.y);
+                        ctx.moveTo(probe.x + 9, probe.y); ctx.lineTo(probe.x + 12, probe.y);
+                        ctx.moveTo(probe.x, probe.y - 12); ctx.lineTo(probe.x, probe.y - 9);
+                        ctx.moveTo(probe.x, probe.y + 9); ctx.lineTo(probe.x, probe.y + 12);
+                        ctx.stroke();
+                        const label = (probe.scr ? '✓ ' : '') + probe.name + ' · L' + probe.layer + '·N' + probe.n;
+                        ctx.font = '600 10.5px "IBM Plex Mono", monospace';
+                        ctx.textAlign = 'left';
+                        const tw = ctx.measureText(label).width;
+                        let lx = probe.x + 14;
+                        if (lx + tw > W - 10) lx = probe.x - 14 - tw;
+                        const ly = probe.y - 12 < 16 ? probe.y + 20 : probe.y - 12;
+                        ctx.fillStyle = 'rgba(241,241,236,.92)';
+                        ctx.fillRect(lx - 5, ly - 11, tw + 10, 17);
+                        ctx.strokeStyle = probe.lit ? 'rgba(75,59,176,.7)' : 'rgba(18,19,22,.3)';
+                        ctx.strokeRect(lx - 5, ly - 11, tw + 10, 17);
+                        ctx.fillStyle = probe.lit ? '#4b3bb0' : 'rgba(18,19,22,.75)';
+                        ctx.fillText(label, lx, ly + 1);
+                    }
+                }
+
+                // a signal wandering the network
+                if (!reduce && links.length) {
+                    if (!pulse || s > pulse.end) {
+                        const li = links[Math.floor(Math.random() * links.length)];
+                        pulse = { a: li[0], b: li[1], start: s + .5, end: s + 2.8 };
+                    }
+                    const p = (s - pulse.start) / 1.8;
+                    if (p > 0 && p < 1) {
+                        const A = nodes[pulse.a], B = nodes[pulse.b];
+                        ctx.globalAlpha = Math.sin(p * Math.PI);
+                        ctx.fillStyle = '#4b3bb0';
+                        ctx.beginPath();
+                        ctx.arc(A.x + (B.x - A.x) * p, A.y + (B.y - A.y) * p, 2.8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.globalAlpha = 1;
+                    }
+                }
+                if (!reduce) requestAnimationFrame(draw);
+                else if (probe) requestAnimationFrame(drew), probe = null; // reduced motion: redraw only on demand
+            }
+
+            // build the real map from the canonical dataset
+            fetch('personalities.json')
+                .then(r => r.ok ? r.json() : null)
+                .then(d => {
+                    if (!d || !Array.isArray(d.personas)) return;
+                    maxLayer = Math.max.apply(null, d.personas.map(p => p.layer));
+                    nodes = d.personas.map(p => ({
+                        layer: p.layer,
+                        n: p.neuron,
+                        name: p.name,
+                        scr: !!p.screening,
+                        lit: !!p.screening,
+                        fy: (p.neuron % 1000) / 1000,
+                        jitter: ((p.neuron * 7) % 97) / 97,
+                        off: ((p.neuron * 83) % 628) / 100,
+                    }));
+                    size(); layout();
+                    if (reduce) draw(0);
+                })
+                .catch(() => { /* static rails remain */ });
+
+            cv.addEventListener('mousemove', e => {
+                const r = cv.getBoundingClientRect();
+                mx = e.clientX - r.left; my = e.clientY - r.top;
+                if (reduce) draw(performance.now());
+            });
+            cv.addEventListener('mouseleave', () => {
+                mx = my = -1;
+                if (reduce) draw(performance.now());
+            });
+            size(); addEventListener('resize', size);
+            if (reduce) draw(0); else requestAnimationFrame(draw);
+        })();
+    </script>
+</body>
+</html>

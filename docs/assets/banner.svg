@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="1280" height="400" role="img" aria-label="Qwen Personality Studio — push one neuron, get a whole new mind">
+  <style>
+    .k { font: 500 15px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: 4px; fill: #5b5e66; }
+    .head { font: 800 72px "Archivo", "Helvetica Neue", Arial, sans-serif; letter-spacing: -3px; fill: #121316; }
+    .bar-label { font: 700 66px "Archivo", "Helvetica Neue", Arial, sans-serif; letter-spacing: -3px; fill: #f1f1ec; }
+    .mono-sm { font: 500 13px "IBM Plex Mono", ui-monospace, monospace; fill: #8a8d94; letter-spacing: 1px; }
+    .stat-b { font: 600 26px "IBM Plex Mono", ui-monospace, monospace; fill: #121316; }
+    .stat-l { font: 500 10px "IBM Plex Mono", ui-monospace, monospace; fill: #8a8d94; letter-spacing: 3px; }
+    .coord { font: 600 10px "IBM Plex Mono", ui-monospace, monospace; fill: #4b3bb0; letter-spacing: 1px; }
+    .dot  { fill: rgba(18,19,22,.18); }
+    .link { stroke: rgba(18,19,22,.10); stroke-width: 1; }
+    .neuron-lit { fill: #4b3bb0; animation: npi 2.8s ease-in-out infinite; }
+    .neuron-lit.d2 { animation-delay: .9s; } .neuron-lit.d3 { animation-delay: 1.7s; } .neuron-lit.d4 { animation-delay: 2.3s; }
+    @keyframes npi { 0%,100% { opacity: .45; } 50% { opacity: 1; } }
+    .maze-ring { fill: none; stroke: rgba(18,19,22,.16); stroke-width: 1.4; }
+    .maze-core { fill: #4b3bb0; animation: npi 2.8s ease-in-out infinite; }
+    .pulse { fill: #4b3bb0; opacity: .9; }
+  </style>
+
+  <!-- paper -->
+  <rect width="1280" height="400" fill="#f1f1ec"/>
+  <rect x="0" y="0" width="1280" height="400" fill="none" stroke="rgba(18,19,22,.14)"/>
+
+  <!-- brand mark: pulsing neuron cells -->
+  <rect x="30" y="22" width="32" height="32" fill="#e8e8e1" stroke="rgba(18,19,22,.3)"/>
+  <circle cx="40" cy="32" r="2.2" fill="rgba(18,19,22,.35)"/>
+  <circle cx="52" cy="44" r="2.2" fill="rgba(18,19,22,.35)"/>
+  <circle cx="46" cy="38" r="3.2" fill="#4b3bb0"/>
+  <text x="76" y="42" style="font: 700 19px 'Archivo', Arial, sans-serif; fill:#121316;">PERSONALITY STUDIO</text>
+  <text x="76" y="61" class="mono-sm" style="font-size:11px; letter-spacing:2.5px;">QWEN STEERING LAB</text>
+
+  <!-- kicker -->
+  <text x="46" y="104" class="k">ACTIVATION STEERING · MECHANISTIC INTERPRETABILITY</text>
+
+  <!-- headline -->
+  <text x="46" y="176" class="head" textLength="576" lengthAdjust="spacingAndGlyphs">Push one neuron.</text>
+  <text x="46" y="252" class="head" textLength="404" lengthAdjust="spacingAndGlyphs">Get a whole</text>
+  <rect x="478" y="200" width="312" height="66" fill="#4b3bb0"/>
+  <text x="502" y="250" class="bar-label" textLength="264" lengthAdjust="spacingAndGlyphs">new mind.</text>
+
+  <!-- tagline column -->
+  <text x="1010" y="96" class="stat-b">Q3.5-4B</text>
+  <text x="1010" y="116" class="stat-l">CHECKPOINT</text>
+  <text x="1010" y="176" class="stat-l" style="fill:#121316;">COMMUNITY-DISCOVERED</text>
+  <text x="1010" y="196" class="stat-l">GROWING REGISTRY</text>
+
+  <!-- neuron constellation: one mark per discovered neuron -->
+  <g transform="translate(0,24)">
+    <line class="link" x1="70"  y1="300" x2="150" y2="275"/>
+    <line class="link" x1="150" y1="275" x2="210" y2="260"/>
+    <line class="link" x1="210" y1="260" x2="300" y2="270"/>
+    <line class="link" x1="300" y1="270" x2="355" y2="250"/>
+    <line class="link" x1="355" y1="250" x2="450" y2="305"/>
+    <line class="link" x1="450" y1="305" x2="540" y2="255"/>
+    <line class="link" x1="540" y1="255" x2="650" y2="290"/>
+    <line class="link" x1="650" y1="290" x2="765" y2="268"/>
+    <line class="link" x1="765" y1="268" x2="905" y2="292"/>
+    <line class="link" x1="95"  y1="268" x2="150" y2="275"/>
+    <line class="link" x1="480" y1="272" x2="540" y2="255"/>
+    <line class="link" x1="620" y1="265" x2="650" y2="290"/>
+    <line class="link" x1="850" y1="300" x2="905" y2="292"/>
+
+    <circle class="dot" cx="70"  cy="300" r="3"/><circle class="dot" cx="95"  cy="268" r="3"/>
+    <circle class="neuron-lit" cx="150" cy="275" r="4"/><circle class="dot" cx="120" cy="310" r="3"/>
+    <circle class="dot" cx="185" cy="295" r="3"/><circle class="dot" cx="210" cy="260" r="3"/>
+    <circle class="dot" cx="240" cy="285" r="3"/><circle class="dot" cx="265" cy="315" r="3"/>
+    <circle class="neuron-lit d2" cx="300" cy="270" r="4"/><circle class="dot" cx="330" cy="300" r="3"/>
+    <circle class="dot" cx="355" cy="250" r="3"/><circle class="dot" cx="390" cy="290" r="3"/>
+    <circle class="dot" cx="415" cy="265" r="3"/><circle class="dot" cx="450" cy="305" r="3"/>
+    <circle class="dot" cx="480" cy="272" r="3"/><circle class="dot" cx="540" cy="255" r="3"/>
+    <circle class="neuron-lit d3" cx="540" cy="255" r="4"/><circle class="dot" cx="565" cy="280" r="3"/>
+    <circle class="dot" cx="595" cy="310" r="3"/><circle class="dot" cx="620" cy="265" r="3"/>
+    <circle class="neuron-lit d4" cx="650" cy="290" r="4"/><circle class="dot" cx="680" cy="250" r="3"/>
+    <circle class="dot" cx="705" cy="295" r="3"/><circle class="dot" cx="730" cy="315" r="3"/>
+    <circle class="dot" cx="765" cy="268" r="3"/><circle class="dot" cx="790" cy="292" r="3"/>
+    <circle class="dot" cx="820" cy="255" r="3"/><circle class="dot" cx="850" cy="300" r="3"/>
+    <circle class="neuron-lit d2" cx="875" cy="275" r="4"/><circle class="dot" cx="905" cy="292" r="3"/>
+    <circle class="dot" cx="935" cy="258" r="3"/><circle class="dot" cx="960" cy="285" r="3"/>
+
+    <text class="coord" x="150" y="262" text-anchor="middle">L14·N8949</text>
+    <text class="coord" x="300" y="256" text-anchor="middle">L13·N4810</text>
+    <text class="coord" x="650" y="306" text-anchor="middle">L5·N7155</text>
+    <text class="coord" x="875" y="262" text-anchor="middle">L17·N8623</text>
+  </g>
+
+  <!-- a slow pulse wandering the network, like a thought finding its host -->
+  <circle r="4" class="pulse">
+    <animateMotion dur="7s" repeatCount="indefinite"
+      path="M70 314 L150 289 L210 274 L300 284 L355 264 L450 319 L540 269 L650 304 L765 282 L905 306 L960 299"/>
+    <animate attributeName="opacity" values=".9;.9;.2;.9" dur="1.6s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- the maze — Westworld homage: every model hides a center; steering finds it -->
+  <g>
+    <circle class="maze-ring" cx="1120" cy="288" r="10"/>
+    <circle class="maze-ring" cx="1120" cy="288" r="21" stroke-dasharray="26 7"/>
+    <circle class="maze-ring" cx="1120" cy="288" r="32" stroke-dasharray="44 10" stroke-dashoffset="12"/>
+    <circle class="maze-ring" cx="1120" cy="288" r="44" stroke-dasharray="60 13" stroke-dashoffset="30"/>
+    <circle class="maze-core" cx="1120" cy="288" r="4"/>
+    <line x1="1076" y1="288" x2="1099" y2="288" stroke="rgba(75,59,176,.5)" stroke-width="1.4"/>
+    <text class="coord" x="1120" y="352" text-anchor="middle">FIND THE CENTER</text>
+  </g>
+</svg>

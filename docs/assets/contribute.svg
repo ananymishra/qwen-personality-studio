@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 500" width="1160" height="500" role="img" aria-label="Contribution flow: find, verify, document, add, open a pull request; community review merges as screened or candidate; runners tally verdicts">
+  <style>
+    text { font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; }
+    .kicker { font: 500 12px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: 3px; fill: #5b5e66; }
+    .num { font: 600 9.5px "IBM Plex Mono", ui-monospace, monospace; fill: #4b3bb0; letter-spacing: 2px; }
+    .name { font: 700 13.5px "Archivo", Arial, sans-serif; fill: #121316; letter-spacing: -.2px; }
+    .sub { font: 400 10.5px "Archivo", Arial, sans-serif; fill: #5b5e66; }
+    .sub-m { font: 500 10px "IBM Plex Mono", ui-monospace, monospace; fill: #5b5e66; }
+    .card { fill: #fff; stroke: rgba(18,19,22,.3); }
+    .f { stroke: rgba(18,19,22,.3); fill: none; marker-end: url(#arr); }
+    .fp { stroke: #4b3bb0; stroke-width: 1.6; fill: none; marker-end: url(#arrp); }
+    .fd { stroke: rgba(18,19,22,.4); stroke-dasharray: 6 5; fill: none; marker-end: url(#arrd); }
+    .lbl { font: 500 10.5px "IBM Plex Mono", ui-monospace, monospace; fill: #8a8d94; letter-spacing: .5px; }
+  </style>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8a8d94"/>
+    </marker>
+    <marker id="arrp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#4b3bb0"/>
+    </marker>
+    <marker id="arrd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8a8d94"/>
+    </marker>
+  </defs>
+
+  <rect width="1160" height="500" fill="#f1f1ec"/>
+  <rect x="0" y="0" width="1160" height="499" fill="none" stroke="rgba(18,19,22,.14)"/>
+
+  <text x="40" y="46" class="kicker">FROM SWEEP TO REGISTRY · THE CONTRIBUTION LOOP</text>
+
+  <!-- band 1 : the five steps -->
+  <g>
+    <rect class="card" x="40"  y="80" width="188" height="84"/>
+    <text class="num" x="54" y="100">01</text>
+    <text class="name" x="54" y="120">Find a candidate</text>
+    <text class="sub" x="54" y="138">sweep · gradient attribution</text>
+    <text class="sub" x="54" y="152">or plain serendipity</text>
+
+    <rect class="card" x="252" y="80" width="188" height="84"/>
+    <text class="num" x="266" y="100">02</text>
+    <text class="name" x="266" y="120">Verify the behavior</text>
+    <text class="sub-m" x="266" y="138">layer · neuron</text>
+    <text class="sub-m" x="266" y="152">dose · direction</text>
+
+    <rect class="card" x="464" y="80" width="188" height="84"/>
+    <text class="num" x="478" y="100">03</text>
+    <text class="name" x="478" y="120">Document evidence</text>
+    <text class="sub" x="478" y="138">before / after transcript,</text>
+    <text class="sub" x="478" y="152">+ the 67-prompt screen</text>
+
+    <rect class="card" x="676" y="80" width="188" height="84"/>
+    <text class="num" x="690" y="100">04</text>
+    <text class="name" x="690" y="120">Add to the dataset</text>
+    <text class="sub-m" x="690" y="138">personalities.json</text>
+    <text class="sub-m" x="690" y="152">+ regen embedded_data.js</text>
+
+    <rect class="card" x="888" y="80" width="188" height="84"/>
+    <text class="num" x="902" y="100">05</text>
+    <text class="name" x="902" y="120">Open a pull request</text>
+    <text class="sub" x="902" y="138">documented doses,</text>
+    <text class="sub" x="902" y="152">reproducible on 4B / 8B</text>
+  </g>
+
+  <line class="f" x1="230" y1="122" x2="248" y2="122"/>
+  <line class="f" x1="442" y1="122" x2="460" y2="122"/>
+  <line class="f" x1="654" y1="122" x2="672" y2="122"/>
+  <line class="f" x1="866" y1="122" x2="884" y2="122"/>
+
+  <!-- PR -> community review -->
+  <line class="f" x1="982" y1="168" x2="982" y2="204"/>
+
+  <rect x="712" y="210" width="400" height="44" fill="#fff" stroke="rgba(18,19,22,.3)"/>
+  <text x="912" y="230" text-anchor="middle" class="num">COMMUNITY REVIEW</text>
+  <text x="912" y="246" text-anchor="middle" class="sub">reproducible on Qwen3.5-4B? does the evidence hold up?</text>
+
+  <!-- not reproducible -> back to 02 -->
+  <path class="fd" d="M708 232 H346 V172"/>
+  <text x="480" y="224" class="lbl">not reproducible → iterate</text>
+
+  <!-- review -> outcomes -->
+  <line class="fp" x1="794" y1="258" x2="794" y2="294"/>
+  <text x="804" y="282" class="lbl" style="fill:#4b3bb0;">yes + screen rates</text>
+  <line class="f"  x1="1006" y1="258" x2="1006" y2="294"/>
+  <text x="1016" y="282" class="lbl">evidence, needs rig</text>
+
+  <g>
+    <rect x="700" y="300" width="188" height="88" fill="#fff" stroke="#4b3bb0" stroke-width="2"/>
+    <text class="num" x="714" y="322">MERGED · SCREENED ✓</text>
+    <text class="name" x="714" y="344">Purple-badge entry</text>
+    <text class="sub" x="714" y="362">purple badge · suite rates</text>
+    <text class="sub" x="714" y="376">inline · featured in README</text>
+
+    <rect x="912" y="300" width="188" height="88" fill="#fff" stroke="rgba(18,19,22,.5)" stroke-dasharray="6 4"/>
+    <text class="num" x="926" y="322" style="fill:#8a8d94;">MERGED · CANDIDATE</text>
+    <text class="name" x="926" y="344">Dashed-badge entry</text>
+    <text class="sub" x="926" y="362">dashed badge · observational</text>
+    <text class="sub" x="926" y="376">evidence · screenable later</text>
+  </g>
+
+  <!-- outcomes -> verdicts ledger -->
+  <line class="f" x1="794"  y1="392" x2="794"  y2="422"/>
+  <line class="f" x1="1006" y1="392" x2="1006" y2="422"/>
+
+  <rect x="40" y="428" width="1060" height="50" fill="#121316"/>
+  <text x="60" y="450" class="num" style="fill:#b9a8ff;">VERDICTS LEDGER · VERDICTS.JSON</text>
+  <text x="60" y="468" class="sub" style="fill:#f1f1ec;">runners rate every stack in the Studio sandbox — worked / didn't tallies land here via PRs</text>
+</svg>

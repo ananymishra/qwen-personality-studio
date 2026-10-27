@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 430" width="1160" height="430" role="img" aria-label="Data flow: personalities.json feeds the Studio, its offline fallback, and the qwen_steering package, which reaches the forward pre-hook and the steering daemon">
+  <style>
+    text { font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; }
+    .kicker { font: 500 12px "IBM Plex Mono", ui-monospace, monospace; letter-spacing: 3px; fill: #5b5e66; }
+    .tag { font: 600 9.5px "IBM Plex Mono", ui-monospace, monospace; fill: #4b3bb0; letter-spacing: 2px; }
+    .name { font: 700 15px "Archivo", Arial, sans-serif; fill: #121316; letter-spacing: -.2px; }
+    .sub { font: 400 11.5px "Archivo", Arial, sans-serif; fill: #5b5e66; }
+    .arrow-lbl { font: 500 10.5px "IBM Plex Mono", ui-monospace, monospace; fill: #8a8d94; letter-spacing: .5px; }
+    .f { stroke: rgba(18,19,22,.3); fill: none; marker-end: url(#arr); }
+  </style>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#8a8d94"/>
+    </marker>
+  </defs>
+
+  <rect width="1160" height="430" fill="#f1f1ec"/>
+  <rect x="0" y="0" width="1160" height="429" fill="none" stroke="rgba(18,19,22,.14)"/>
+
+  <text x="40" y="46" class="kicker">DATA FLOW · A COORDINATE IS ONLY EVER WRITTEN DOWN ONCE</text>
+
+  <!-- 1) source of truth -->
+  <rect x="40" y="150" width="250" height="140" fill="#fff" stroke="rgba(18,19,22,.25)"/>
+  <rect x="40" y="150" width="250" height="5" fill="#4b3bb0"/>
+  <text x="58" y="184" class="tag">ONE SOURCE OF TRUTH</text>
+  <text x="58" y="212" class="name">personalities.json</text>
+  <text x="58" y="234" class="sub">personas · quirks · stacks · screening rates</text>
+  <text x="58" y="252" class="sub">persona &amp; quirk = one neuron each ·</text>
+  <text x="58" y="268" class="sub">stack = provenanced multi-neuron recipe</text>
+  <text x="58" y="282" class="sub">mixes live in the sandbox + ledger</text>
+
+  <!-- 2) consumers -->
+  <g>
+    <rect x="450" y="96"  width="300" height="78" fill="#fff" stroke="rgba(18,19,22,.25)"/>
+    <text x="468" y="127" class="name">studio/embedded_data.js</text>
+    <text x="468" y="150" class="sub">auto-generated offline fallback for file://</text>
+
+    <rect x="450" y="210" width="300" height="78" fill="#fff" stroke="rgba(18,19,22,.25)"/>
+    <text x="468" y="241" class="name">studio/ · web studio</text>
+    <text x="468" y="264" class="sub">library · sandbox · exports · verdicts</text>
+
+    <rect x="450" y="324" width="300" height="78" fill="#fff" stroke="rgba(18,19,22,.25)"/>
+    <text x="468" y="355" class="name">qwen_steering · python package</text>
+    <text x="468" y="378" class="sub">resolves ids → (layer, neuron, dose)</text>
+  </g>
+
+  <!-- fan: source -> consumers (card subtitles carry the description) -->
+  <path class="f" d="M296 168 H414 V135 H438"/>
+  <path class="f" d="M296 218 H414 V249 H438"/>
+  <path class="f" d="M296 270 H420 V363 H430" stroke-dasharray="6 5"/>
+
+  <!-- 3) runtime targets -->
+  <g>
+    <rect x="880" y="150" width="260" height="84" fill="#fff" stroke="#4b3bb0" stroke-width="1.5"/>
+    <text x="898" y="182" class="name">forward pre-hook</text>
+    <text x="898" y="205" class="sub">injects Δ at the down_proj input,</text>
+    <text x="898" y="221" class="sub">removed when generation ends</text>
+
+    <rect x="880" y="290" width="260" height="84" fill="#121316"/>
+    <text x="898" y="322" class="name" style="fill:#f1f1ec;">steering daemon</text>
+    <text x="898" y="345" class="sub" style="fill:#b9a8ff;">localhost:8791 · accepts a stack,</text>
+    <text x="898" y="361" class="sub" style="fill:#b9a8ff;">returns the steered generation</text>
+  </g>
+
+  <!-- consumers -> runtime -->
+  <!-- Q -> hook: hops over the S -> daemon line -->
+  <path class="f" d="M756 340 H800"/>
+  <path class="f" d="M816 340 H830 V192 H866"/>
+
+  <path class="f" d="M756 366 H866"/>
+  <text x="762" y="384" class="arrow-lbl">daemon client</text>
+
+  <path class="f" d="M756 254 H808 V348 H866"/>
+</svg>

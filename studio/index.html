@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en" class="motion">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Personality Studio — single-neuron steering for Qwen LLMs</title>
+    <meta name="description" content="Browse the community registry of single-neuron activation-steering personas for Qwen LLMs. Stack neurons in the sandbox and export ready-to-run payloads.">
+    <script>
+        (function () {
+            var h = document.documentElement;
+            if (!matchMedia('(prefers-reduced-motion: reduce)').matches) h.classList.add('motion');
+            try { if (sessionStorage.getItem('qps-seen')) h.classList.add('no-intro'); } catch (e) {}
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Offline fallback dataset (auto-generated from personalities.json) -->
+    <script src="embedded_data.js"></script>
+    <style>
+        :root {
+            --bg: #f1f1ec;
+            --bg-alt: #e8e8e1;
+            --fg: #121316;
+            --ink-rgb: 18, 19, 22;
+            --muted: #5b5e66;
+            --faint: #8a8d94;
+            --line: rgba(18, 19, 22, .14);
+            --line-strong: rgba(18, 19, 22, .30);
+            --accent: #4b3bb0;
+            --accent-ink: #ffffff;
+            --up: #1f6f4a;
+            --down: #a4321f;
+            --font-display: "Archivo", system-ui, sans-serif;
+            --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+            --ease-out: cubic-bezier(.16, 1, .3, 1);
+            --header-h: 4.25rem;
+            --gutter: clamp(1rem, .55rem + 1.8vw, 2.5rem);
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-display);
+            font-size: 15px;
+            line-height: 1.55;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+        a { color: inherit; }
+        button { font: inherit; cursor: pointer; }
+        input, select { font: inherit; }
+        .mono { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .01em; }
+        .kicker {
+            font-family: var(--font-mono);
+            font-size: .6875rem;
+            font-weight: 500;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        ::selection { background: var(--accent); color: var(--accent-ink); }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(18,19,22,.25); border: 3px solid var(--bg); border-radius: 6px; }
+
+        /* ------------------------------ header ------------------------------ */
+        .site-header {
+            position: fixed; inset: 0 0 auto; z-index: 50;
+            height: var(--header-h);
+            padding-inline: var(--gutter);
+            display: flex; align-items: center; justify-content: space-between; gap: 2rem;
+            background: color-mix(in srgb, var(--bg) 97%, transparent);
+            border-bottom: 1px solid var(--line);
+            backdrop-filter: blur(6px);
+        }
+        .brand { display: inline-flex; align-items: center; gap: .65rem; text-decoration: none; }
+        .brand__mark {
+            position: relative; width: 30px; height: 30px;
+            border: 1px solid var(--line-strong); display: grid; place-items: center;
+            background: var(--bg-alt);
+        }
+        .brand__cell {
+            width: 8px; height: 8px; background: var(--accent);
+            animation: cellpulse 2.6s cubic-bezier(.16, 1, .3, 1) infinite;
+        }
+        @keyframes cellpulse {
+            0%, 100% { transform: scale(.7); opacity: .55; }
+            50%      { transform: scale(1.15); opacity: 1; }
+        }
+        .brand__name { font-weight: 700; font-size: .95rem; letter-spacing: -.01em; }
+        .brand__name small { display: block; font-family: var(--font-mono); font-weight: 500; font-size: .625rem; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
+        .hnav {
+            position: relative;
+            display: flex; align-items: center;
+            border: 1px solid var(--line); padding: 3px;
+            gap: 2px;
+        }
+        .hnav__glide {
+            position: absolute; top: 3px; bottom: 3px;
+            background: var(--fg); transition: all .35s var(--ease-out);
+            z-index: 0;
+        }
+        .hnav__item {
+            position: relative; z-index: 1;
+            padding: .45rem 1rem;
+            font-size: .8125rem; font-weight: 500;
+            background: none; border: 0; color: var(--muted);
+            transition: color .25s;
+        }
+        .hnav__item.is-active { color: var(--bg); }
+        .hnav__item:not(.is-active):hover { color: var(--fg); }
+        .header-actions { display: flex; align-items: center; gap: .75rem; }
+
+        /* -------------------------------- buttons ------------------------------- */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+            padding: .55rem 1.1rem;
+            border: 1px solid var(--fg);
+            background: var(--fg); color: var(--bg);
+            font-size: .8125rem; font-weight: 600; letter-spacing: .01em;
+            text-decoration: none;
+            transition: background .25s, color .25s, border-color .25s, transform .25s var(--ease-out);
+        }
+        .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); transform: translateY(-1px); }
+        .btn--ghost { background: transparent; color: var(--fg); border-color: var(--line-strong); }
+        .btn--ghost:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+        .btn--accent { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+        .btn--accent:hover { background: #3a2d8e; border-color: #3a2d8e; }
+        .btn--sm { padding: .35rem .75rem; font-size: .75rem; }
+        .linklike {
+            background: none; border: 0; padding: 0;
+            font-size: .75rem; font-weight: 600;
+            text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong);
+            transition: color .2s;
+        }
+        .linklike:hover { color: var(--accent); }
+
+        /* --------------------------------- intro --------------------------------- */
+        main { padding-top: var(--header-h); }
+        .intro {
+            position: relative; border-bottom: 1px solid var(--line);
+            padding: clamp(2rem, 4vw, 3.5rem) var(--gutter) 0;
+            overflow: hidden;
+        }
+        .intro__row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
+        .intro h1 {
+            margin: .35em 0 0;
+            font-size: clamp(2.4rem, 1rem + 6.2vw, 5.4rem);
+            font-weight: 800; line-height: .98; letter-spacing: -.028em;
+        }
+        .intro h1 em { font-style: normal; color: var(--accent); }
+        .intro__lede {
+            max-width: 34rem; color: var(--muted);
+            font-size: .95rem; margin: 0 0 1.4rem;
+        }
+        .field-wrap { position: relative; height: clamp(120px, 16vw, 190px); border-top: 1px dashed var(--line); margin-top: .25rem; }
+        .field-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+        .field__labels {
+            position: absolute; inset: auto 0 0; height: 1.1rem; pointer-events: none;
+        }
+        .field__labels span {
+            position: absolute; bottom: 2px; transform: translateX(-50%);
+            font-family: var(--font-mono); font-size: .5625rem; color: var(--faint); letter-spacing: .06em;
+        }
+
+        /* -------------------------------- views -------------------------------- */
+        .view { display: block; }
+        .view[hidden] { display: none; }
+        .view__section {
+            padding: clamp(1.5rem, 3vw, 2.5rem) var(--gutter);
+            border-bottom: 1px solid var(--line);
+        }
+        .view__section:last-child { border-bottom: 0; }
+        .section-head {
+            display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .75rem;
+            margin-bottom: 1.25rem;
+        }
+        .section-head h2 { margin: 0; font-size: clamp(1.3rem, 1rem + 1.4vw, 2rem); font-weight: 700; letter-spacing: -.02em; }
+        .section-head .mono { color: var(--faint); }
+
+        /* library controls */
+        .lib-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; margin-bottom: 1.5rem; }
+        .searchbox { flex: 1 1 20rem; min-width: 16rem; position: relative; }
+        .searchbox input {
+            width: 100%; padding: .65rem .1rem;
+            background: none; border: 0; border-bottom: 1px solid var(--line-strong);
+            font-family: var(--font-mono); font-size: .8125rem; color: var(--fg);
+            outline: none; border-radius: 0;
+        }
+        .searchbox input::placeholder { color: var(--faint); }
+        .searchbox input:focus { border-bottom-color: var(--accent); }
+        .searchbox i { position: absolute; right: 0; top: .85rem; font-style: normal; color: var(--faint); font-size: .8rem; }
+        .cats { display: flex; gap: .5rem; flex-wrap: wrap; }
+        .cat-tag {
+            display: inline-flex; align-items: center; gap: .4em;
+            padding: .38em .6em;
+            border: 1px solid; border-radius: 2px;
+            font-family: var(--font-mono); font-size: .6875rem; font-weight: 500; letter-spacing: .02em;
+            background: none; color: var(--muted); border-color: var(--line-strong);
+            transition: all .25s var(--ease-soft, var(--ease-out));
+        }
+        .cat-tag:hover { color: var(--accent); border-color: var(--accent); }
+        .cat-tag.is-active { color: var(--accent); border-color: var(--accent); }
+        .cat-tag .n { color: var(--faint); font-size: .625rem; transform: translateY(-1px); }
+        .cat-tag.is-active .n { color: inherit; opacity: .7; }
+
+        /* library grid */
+        .grid {
+            display: grid; gap: 0;
+            grid-template-columns: repeat(4, 1fr);
+            border-top: 1px solid var(--line);
+            border-left: 1px solid var(--line);
+        }
+        @media (max-width: 1280px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+        .card {
+            border-right: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            padding: 1.1rem 1.15rem 1rem;
+            display: flex; flex-direction: column; gap: .55rem;
+            min-height: 190px;
+            transition: background .2s;
+        }
+        .card:hover { background: var(--bg-alt); }
+        .card__top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+        .coord { font-family: var(--font-mono); font-size: .6875rem; font-weight: 600; letter-spacing: .06em; color: var(--fg); }
+        .cat-pill {
+            font-family: var(--font-mono); font-size: .5625rem; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--faint); border: 1px solid var(--line); padding: .3em .5em; border-radius: 2px;
+        }
+        .cat-pill.is-verified {
+            color: var(--accent); border-color: var(--accent);
+        }
+        .cat-pill.is-candidate { color: var(--faint); border-style: dashed; }
+        .is-verified-legend { color: var(--accent); }
+        .is-candidate-legend { color: var(--faint); }
+        .card h3 { margin: 0; font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
+        .card p { margin: 0; font-size: .8125rem; color: var(--muted); line-height: 1.5; }
+        .card__foot {
+            margin-top: auto; padding-top: .6rem;
+            border-top: 1px dashed var(--line);
+            display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+        }
+        .dose { font-family: var(--font-mono); font-size: .75rem; font-weight: 600; }
+        .dose.is-up { color: var(--up); }
+        .dose.is-down { color: var(--down); }
+        .empty { padding: 3rem 1rem; text-align: center; color: var(--faint); font-family: var(--font-mono); font-size: .75rem; }
+
+        /* sandbox */
+        .sandbox { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0; }
+        .sandbox > div { padding: clamp(1.25rem, 2.5vw, 2rem); }
+        .sandbox > div + div { border-left: 1px solid var(--line); }
+        .stack-row { border: 1px solid var(--line); border-radius: 0; margin-bottom: 1rem; }
+        .stack-row__head {
+            display: flex; justify-content: space-between; align-items: center; gap: .5rem;
+            padding: .7rem 1rem; border-bottom: 1px solid var(--line); background: var(--bg-alt);
+        }
+        .stack-row__head .name { font-weight: 700; font-size: .85rem; display: inline-flex; align-items: center; gap: .55rem; }
+        .slot-dot { width: 7px; height: 7px; background: var(--accent); display: inline-block; }
+        .stack-row__body { display: grid; grid-template-columns: 4.5rem 6rem 1fr; gap: 1rem; padding: .9rem 1rem; align-items: center; }
+        .field label { display: block; font-family: var(--font-mono); font-size: .5625rem; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-bottom: .3rem; }
+        .field input[type=number], .field input[type=text] {
+            width: 100%; padding: .35rem .55rem;
+            background: var(--bg); border: 1px solid var(--line-strong); border-radius: 0;
+            font-family: var(--font-mono); font-size: .78rem; color: var(--fg);
+            outline: none; -moz-appearance: textfield;
+        }
+        .field input::-webkit-outer-spin-button, .field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .field input:focus { border-color: var(--accent); }
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 22px; background: none; }
+        input[type=range]::-webkit-slider-runnable-track { height: 2px; background: var(--line-strong); }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px; margin-top: -6px;
+            background: var(--accent); border-radius: 50%; border: 2px solid var(--bg);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        input[type=range]::-moz-range-track { height: 2px; background: var(--line-strong); }
+        input[type=range]::-moz-range-thumb { width: 12px; height: 12px; background: var(--accent); border: 2px solid var(--bg); border-radius: 50%; box-shadow: 0 0 0 1px var(--accent); }
+        .dose-read { font-family: var(--font-mono); font-size: .75rem; font-weight: 600; white-space: nowrap; }
+        .dose-read.is-up { color: var(--up); }
+        .dose-read.is-down { color: var(--down); }
+        .sandbox__lede { color: var(--muted); font-size: .85rem; margin: .75rem 0 1.1rem; }
+        .payload {
+            border: 1px solid var(--line-strong); background: var(--bg);
+            padding: .9rem 1rem; overflow-x: auto;
+        }
+        .payload pre { margin: 0; font-family: var(--font-mono); font-size: .75rem; line-height: 1.65; color: var(--fg); }
+        .payload .k { color: var(--accent); }
+        .payload .num { color: var(--up); }
+        .payload .neg { color: var(--down); }
+
+        /* export */
+        .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); }
+        .export-grid > div { padding: 1.1rem 1.25rem; min-width: 0; }
+        .export-grid > div + div { border-left: 1px solid var(--line); background: var(--bg-alt); }
+        .export-grid pre {
+            margin: .75rem 0 0; padding: 1rem; overflow-x: auto;
+            background: var(--fg); color: #d7d7cf;
+            font-family: var(--font-mono); font-size: .72rem; line-height: 1.7;
+            min-height: 220px;
+        }
+        .export-grid .k { color: #b9a8ff; }
+
+        /* toast */
+        .toast {
+            position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 90;
+            background: var(--fg); color: var(--bg);
+            padding: .7rem 1rem; font-size: .78rem; font-weight: 600;
+            display: flex; align-items: center; gap: .6rem;
+            transform: translateY(140%); transition: transform .4s var(--ease-out);
+            pointer-events: none;
+        }
+        .toast.is-on { transform: translateY(0); }
+        .toast b { color: #b9a8ff; font-weight: 600; }
+
+        /* footer */
+        .site-footer {
+            padding: 1.5rem var(--gutter) 2.5rem;
+            display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center;
+            border-top: 1px solid var(--line);
+        }
+        .site-footer .mono { color: var(--faint); }
+        .site-footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+        .site-footer a:hover { color: var(--accent); }
+
+        /* reveal animation */
+        .motion .reveal { opacity: 0; transform: translateY(14px); animation: reveal .7s var(--ease-out) forwards; }
+        .motion .reveal.d1 { animation-delay: .08s; } .motion .reveal.d2 { animation-delay: .16s; } .motion .reveal.d3 { animation-delay: .24s; }
+        @keyframes reveal { to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .motion * { animation: none !important; transition: none !important; }
+        }
+
+        @media (max-width: 900px) {
+            .hnav { display: none; }
+            .mobile-tabs { display: flex; }
+            .sandbox { grid-template-columns: 1fr; }
+            .sandbox > div + div { border-left: 0; border-top: 1px solid var(--line); }
+            .export-grid { grid-template-columns: 1fr; }
+            .export-grid > div + div { border-left: 0; border-top: 1px solid var(--line); }
+            .stack-row__body { grid-template-columns: 1fr; gap: .75rem; }
+        }
+        .mobile-tabs { display: none; position: fixed; top: var(--header-h); inset: 0 0 auto; z-index: 49; background: var(--bg); border-bottom: 1px solid var(--line); }
+        .mobile-tabs button { flex: 1; padding: .7rem; border: 0; background: none; font-size: .78rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; }
+        .mobile-tabs button.is-active { color: var(--fg); border-bottom-color: var(--accent); }
+        @media (max-width: 900px) { .mobile-view-offset { padding-top: 2.9rem; } }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main" style="position:absolute;left:-999px;">Skip to content</a>
+
+    <header class="site-header">
+        <a class="brand" href="../index.html" aria-label="Qwen Personality Studio home">
+            <span class="brand__mark" aria-hidden="true"><span class="brand__cell"></span></span>
+            <span class="brand__name">Personality Studio<small>Qwen steering lab</small></span>
+        </a>
+
+        <nav class="hnav" aria-label="Main">
+            <span class="hnav__glide" aria-hidden="true"></span>
+            <button class="hnav__item is-active" data-view="library" aria-expanded="true">Library</button>
+            <button class="hnav__item" data-view="sandbox">Sandbox</button>
+            <button class="hnav__item" data-view="export">Export</button>
+        </nav>
+
+        <div class="header-actions">
+            <button class="btn btn--ghost btn--sm" id="randomBtn" title="Load two random neurons">
+                <span class="mono" style="letter-spacing:.08em;">RANDOM MIX</span>
+            </button>
+            <a class="btn btn--sm" href="https://github.com/ananymishra/qwen-personality-studio" target="_blank" rel="noopener">GitHub</a>
+        </div>
+    </header>
+
+    <nav class="mobile-tabs" aria-label="Mobile">
+        <button data-view="library" class="is-active">Library</button>
+        <button data-view="sandbox">Sandbox</button>
+        <button data-view="export">Export</button>
+    </nav>
+
+    <main id="main" class="mobile-view-offset">
+        <!-- ============================ LIBRARY ============================ -->
+        <section id="view-library" class="view view__section" style="padding-bottom:3.5rem;">
+            <div class="intro__row reveal" style="margin-bottom:2rem;">
+                <div>
+                    <p class="kicker">Activation steering · Mechanistic interpretability</p>
+                    <h1>The <em>neurons</em> inside<br>an open-weights mind.</h1>
+                </div>
+                <div style="text-align:right;">
+                    <p class="mono" style="color:var(--faint); letter-spacing:.14em; text-transform:uppercase; margin:0 0 .8rem;">Target · Qwen3.5-4B · MLP · down_proj input</p>
+                    <p class="intro__lede" style="margin-left:auto;">Every persona is a single MLP neuron. Push one coordinate at inference time and the model's whole character changes — no fine-tuning, no system prompt.</p>
+                </div>
+            </div>
+
+            <!-- ruler field -->
+            <div class="field-wrap reveal d1" aria-hidden="true">
+                <canvas id="fieldCv"></canvas>
+                <div class="field__labels mono" id="fieldLabels"></div>
+            </div>
+
+            <div class="lib-controls reveal d2" style="margin-top:2.25rem;">
+                <div class="searchbox">
+                    <input id="searchInput" type="text" placeholder="search personas, L14, N8949, magic, owl …" oninput="renderLibrary()" autocomplete="off">
+                    <i><span class="mono" id="resultCount"></span></i>
+                </div>
+                <div class="cats" id="catRow"></div>
+                <p class="mono" style="width:100%;font-size:.6875rem;color:var(--faint);letter-spacing:.08em;">
+                    <span class="is-verified-legend">SCREENED ✓</span> = survived a 67-prompt behavioral suite ·
+                    <span class="is-candidate-legend">CANDIDATE</span> = community-proposed, not screened yet — plug the coordinates in, see for yourself, and file a verdict in the sandbox
+                </p>
+            </div>
+
+            <div class="grid reveal d3" id="libraryGrid"></div>
+        </section>
+
+        <!-- ============================ SANDBOX ============================ -->
+        <section id="view-sandbox" class="view" hidden>
+            <div class="sandbox">
+                <div class="view__section" style="border-bottom:0;">
+                    <div class="section-head">
+                        <h2>Neuron stack</h2>
+                        <span class="mono" id="stackCount">0 active</span>
+                    </div>
+                    <p class="sandbox__lede">Stack MLP neurons into the residual stream — as many as you can meaningfully dose, single or mixed. Drag the dose below zero to flip a persona's direction.</p>
+
+                    <div id="stackList"></div>
+
+                    <div style="display:flex; gap:.5rem; margin-top:1.25rem;">
+                        <button class="btn btn--ghost" id="addSlotBtn" style="flex:1;">+ Add neuron slot</button>
+                        <button class="btn btn--ghost" id="clearStackBtn">Clear</button>
+                    </div>
+
+                    <div id="verdictBox" style="margin-top:1.5rem; border:1px solid var(--line); background:var(--bg-alt); padding:1rem 1.15rem;">
+                        <p class="kicker" style="margin:0 0 .4rem;">Did it work? <span class="mono" id="verdictTally" style="color:var(--accent);"></span></p>
+                        <p class="sandbox__lede" style="margin:0 0 .8rem; font-size:.78rem;">
+                            Stacking is <b>not linear</b> — a pair that reads as one coherent character can break apart as a
+                            triple, and some single neurons only surface inside a combo. Rate this exact stack so the next
+                            person knows what to expect.
+                        </p>
+                        <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;">
+                            <button class="btn btn--ghost" id="voteGoodBtn" title="Coherent, produced the intended persona">worked ✓</button>
+                            <button class="btn btn--ghost" id="voteBadBtn" title="Degenerate, garbled, off-persona, or no effect">didn't ✕</button>
+                            <a id="verdictShare" class="mono" style="font-size:.6875rem; color:var(--muted); display:none;" target="_blank" rel="noopener">share yours as a GitHub issue ↗</a>
+                        </div>
+                        <p class="mono" id="verdictMsg" style="margin:.6rem 0 0; font-size:.6875rem; color:var(--faint);"></p>
+                        <div style="margin-top:1rem; border-top:1px dashed var(--line); padding-top:.8rem;">
+                            <p class="kicker" style="margin:0 0 .5rem;">Stacks the community has rated</p>
+                            <div id="verdictsLedgerList" class="mono" style="font-size:.72rem;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view__section" style="border-bottom:0;">
+                    <div class="section-head"><h2>Residual payload</h2><span class="mono">normalized by median ‖resid L‖</span></div>
+                    <p class="sandbox__lede">Combined injections share the same stream — watch for dose sums past ±2.0, where coherence degrades.</p>
+                    <div class="payload"><pre id="payloadPre"></pre></div>
+                    <div style="margin-top:1.25rem; display:flex; gap:.5rem;">
+                        <button class="btn btn--accent" id="toExportBtn" style="flex:1;">Generate scripts →</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================ EXPORT ============================ -->
+        <section id="view-export" class="view view__section" hidden>
+            <div class="section-head">
+                <div>
+                    <h2>Reproduce your mix</h2>
+                    <p class="sandbox__lede" style="margin:.4rem 0 0;">Everything below runs against a locally steering daemon at <span class="mono" style="color:var(--accent);">localhost:8791</span> — or import the neurons array straight into <span class="mono" style="color:var(--accent);">qwen_steering</span>.</p>
+                </div>
+                <div style="display:flex; gap:.5rem;">
+                    <button class="btn btn--ghost btn--sm" data-copy="curl">Copy cURL</button>
+                    <button class="btn btn--sm" data-copy="python">Copy Python</button>
+                </div>
+            </div>
+            <div class="export-grid">
+                <div>
+                    <p class="kicker">POST /api/agent/steer</p>
+                    <pre id="exportCurl"></pre>
+                </div>
+                <div>
+                    <p class="kicker">python · daemon client</p>
+                    <pre id="exportPython"></pre>
+                </div>
+            </div>
+            <p class="mono" style="margin-top:1rem; color:var(--faint);">Doses are application-ready: the runtime multiplies each injection so ‖Δ·W_down[:, n]‖ = dose × median‖resid L‖.</p>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <span class="mono">MIT LICENSE · DATA: PERSONALITIES.JSON · RUNTIME: QWEN_STEERING</span>
+        <span class="mono">“THESE VIOLENT DELIGHTS HAVE VIOLENT ENDS” — DOSES PAST ±2.0 AT YOUR OWN PERIL</span>
+        <span class="mono">STEER RESPONSIBLY — RESEARCH TOOL, <a href="https://github.com/ananymishra/qwen-personality-studio#responsible-use">NOT FOR RAW DEPLOYMENT</a></span>
+    </footer>
+
+    <div class="toast" id="toast" role="status"><b>✓</b><span id="toastMsg">Copied.</span></div>
+
+    <script>
+        'use strict';
+
+        /* ============================ dataset ============================
+         * 1) fetch('../personalities.json')  — the canonical repo-wide dataset.
+         * 2) window.EMBEDDED_STUDIO_DATA    — offline fallback for file://.
+         * ================================================================== */
+        const mapPersonas = src => (src && Array.isArray(src.personas))
+            ? src.personas.map(p => ({ id: p.id, name: p.name, category: p.category, layer: p.layer, n: p.neuron, dose: p.dose, desc: p.description, scr: p.screening || null, extra: (p.extra_neurons || []).map(e => ({ layer: e.layer, n: e.neuron, dose: e.dose })) }))
+            : [];
+
+        let masterPersonalities = mapPersonas(window.EMBEDDED_STUDIO_DATA);
+        let currentCategory = 'all';
+        let currentView = 'library';
+
+        fetch('../personalities.json', { cache: 'no-cache' })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data) return;
+                masterPersonalities = mapPersonas(data);
+                buildCats(); renderLibrary(); renderFieldOnce();
+            })
+            .catch(() => { /* file:// — embedded fallback in use */ });
+
+        /* ============================ helpers ============================ */
+        const $ = id => document.getElementById(id);
+        const fmtDose = d => (d > 0 ? '+' : '') + (Number.isInteger(d) ? d : d.toFixed(1));
+        const doseCls = d => d > 0 ? 'is-up' : 'is-down';
+
+        let stack = [
+            { layer: 14, n: 8949, dose: 1.0, name: 'Evil Qwen' },
+            { layer: 13, n: 7956, dose: -1.0, name: 'Evil Qwen' },
+            { layer: 13, n: 4810, dose: 0.8, name: 'Yuki-Chan' },
+        ];
+
+        /* ============================ neuron constellation ============================
+         * One mark per discovered neuron — x is the layer, y the neuron index.
+         * A few "persona" neurons glow purple; faint synaptic links form the maze,
+         * and a signal pulse wanders the network like a thought finding its host.
+         * ================================================================== */
+        const cv = $('fieldCv'), ctx = cv ? cv.getContext('2d') : null;
+        let dots = null, links = [], W = 0, H = 0, dpr = 1, intro = null, animating = false, pulse = null;
+        function sizeField() {
+            if (!ctx) return;
+            dpr = Math.min(devicePixelRatio || 1, 2);
+            W = cv.clientWidth; H = cv.clientHeight;
+            cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+            const layers = [...new Set(masterPersonalities.map(p => p.layer))].sort((a, b) => a - b);
+            const maxLayer = layers.length ? layers[layers.length - 1] : 36;
+            dots = masterPersonalities.map((p, i) => {
+                const xj = ((p.n * 7) % 89) / 89 * .85; // spread neurons within their layer band
+                return {
+                    x: ((p.layer + xj) / (maxLayer + 1)) * (W - 8) + 4,
+                    y: H * (0.30 + 0.58 * ((p.n % 1000) / 1000)),
+                    sx: ((i * 7919) % 1000) / 1000 * W,
+                    sy: -(20 + ((i * 131) % 60)),
+                    ph: ((i * 83) % 628) / 100,
+                    lit: i % 13 === 0 || !!p.scr,
+                    lbl: 'L' + p.layer + '·N' + p.n,
+                };
+            });
+            // synaptic links: each neuron connects to its two nearest neighbors
+            links = [];
+            const maxDist = Math.max(W / 22, 46);
+            for (let i = 0; i < dots.length; i++) {
+                const cand = [];
+                for (let j = i + 1; j < dots.length; j++) {
+                    const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
+                    const d2 = dx * dx + dy * dy;
+                    if (d2 < maxDist * maxDist) cand.push([j, d2]);
+                }
+                cand.sort((a, b) => a[1] - b[1]);
+                for (let k = 0; k < Math.min(2, cand.length); k++) links.push([i, cand[k][0]]);
+            }
+            // labels only for lit neurons that won't collide with an already-labeled one
+            const litOrder = dots.map((_, i) => i).filter(i => dots[i].lit).sort((a, b) => dots[a].x - dots[b].x);
+            let lastX = -1e9;
+            for (const i of litOrder) {
+                const d = dots[i];
+                d.showLbl = Math.abs(d.x - lastX) > W / 14;
+                if (d.showLbl) lastX = d.x;
+            }
+            // layer labels
+            const labels = $('fieldLabels'); labels.innerHTML = '';
+            const steps = W > 640 ? 6 : 3;
+            for (let s = 0; s <= steps; s++) {
+                const el = document.createElement('span');
+                el.style.left = (s / steps * 100) + '%';
+                el.textContent = 'L' + Math.round(s / steps * maxLayer);
+                labels.appendChild(el);
+            }
+        }
+        function drawField(nowMs) {
+            if (!ctx || !dots) return;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, W, H);
+            const t = intro === null ? 1.2 : (nowMs - intro) / 1300;
+            const e = t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+            const now = nowMs / 1000;
+            // synaptic links (glide in with the neurons)
+            ctx.strokeStyle = 'rgba(18,19,22,' + (.10 * e).toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            for (const [a, b] of links) {
+                const A = dots[a], B = dots[b];
+                const ax = A.sx + (A.x - A.sx) * e, ay = A.sy + (A.y - A.sy) * e;
+                const bx = B.sx + (B.x - B.sx) * e, by = B.sy + (B.y - B.sy) * e;
+                ctx.beginPath();
+                ctx.moveTo(ax, ay);
+                ctx.lineTo(bx, by);
+                ctx.stroke();
+            }
+            // neurons
+            for (const d of dots) {
+                const x = d.sx + (d.x - d.sx) * e, y = d.sy + (d.y - d.sy) * e;
+                const breathe = d.lit
+                    ? .58 + .38 * Math.sin(now * 1.6 + d.ph)
+                    : .20 + .09 * Math.sin(now * .9 + d.ph * 2);
+                if (d.lit) {
+                    ctx.fillStyle = 'rgba(75,59,176,' + (breathe * e).toFixed(3) + ')';
+                    ctx.fillRect(x - 2, y - 4, 4, 8);
+                    if (d.showLbl) {
+                        ctx.font = '600 9px "IBM Plex Mono", monospace';
+                        ctx.fillStyle = 'rgba(75,59,176,' + (.55 * e).toFixed(3) + ')';
+                        ctx.fillText(d.lbl, x + 6, y + 3);
+                    }
+                } else {
+                    ctx.fillStyle = 'rgba(18,19,22,' + (breathe * e).toFixed(3) + ')';
+                    ctx.fillRect(x - 1.5, y - 3, 3, 6);
+                }
+            }
+            // a signal wandering the network
+            if (links.length && intro !== null) {
+                if (!pulse || now > pulse.end) {
+                    const li = links[Math.floor(Math.random() * links.length)];
+                    pulse = { a: li[0], b: li[1], start: now + .6, end: now + 3.2 };
+                }
+                const p = (now - pulse.start) / 1.6;
+                if (p > 0 && p < 1) {
+                    const A = dots[pulse.a], B = dots[pulse.b];
+                    const px = A.x + (B.x - A.x) * p, py = A.y + (B.y - A.y) * p;
+                    ctx.globalAlpha = Math.sin(p * Math.PI);
+                    ctx.fillStyle = '#4b3bb0';
+                    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+            if (animating) requestAnimationFrame(drawField);
+        }
+        let fieldOnce = false;
+        function renderFieldOnce() {
+            if (fieldOnce || !cv || !ctx) return;
+            fieldOnce = true;
+            try { sessionStorage.setItem('qps-seen', '1'); } catch (e) {}
+            const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+                || document.documentElement.classList.contains('no-intro');
+            if (reduce) { animating = false; intro = null; drawField(); return; }
+            animating = true; intro = performance.now();
+            requestAnimationFrame(drawField);
+        }
+        addEventListener('resize', () => { sizeField(); if (!animating) drawField(); });
+        sizeField(); setTimeout(renderFieldOnce, 150);
+
+        /* ============================ library ============================ */
+        function buildCats() {
+            const defs = [['all', 'All'], ['persona', 'Personas'], ['quirk', 'Quirks'], ['stack', 'Stacks']];
+            $('catRow').innerHTML = defs.map(([k, label]) => {
+                const n = k === 'all' ? masterPersonalities.length : masterPersonalities.filter(p => p.category === k).length;
+                return `<button class="cat-tag ${k === currentCategory ? 'is-active' : ''}" data-cat="${k}">${label} <span class="n">${n}</span></button>`;
+            }).join('');
+            document.querySelectorAll('.cat-tag').forEach(b => b.onclick = () => {
+                currentCategory = b.dataset.cat;
+                document.querySelectorAll('.cat-tag').forEach(x => x.classList.toggle('is-active', x === b));
+                renderLibrary();
+            });
+        }
+        function renderLibrary() {
+            const q = $('searchInput').value.trim().toLowerCase().replace(/\s+/g, '');
+            const list = masterPersonalities.filter(p => {
+                if (currentCategory !== 'all' && p.category !== currentCategory) return false;
+                if (!q) return true;
+                const hay = (p.name + 'l' + p.layer + 'n' + p.n + p.desc).toLowerCase().replace(/\s+/g, '');
+                return hay.includes(q) || ('l' + p.layer).includes(q) || ('n' + p.n).includes(q);
+            });
+            $('resultCount').textContent = list.length + ' / ' + masterPersonalities.length;
+            $('libraryGrid').innerHTML = list.length ? list.map(p => {
+                const pct = x => Math.round(x * 100) + '%';
+                const badge = p.scr
+                    ? `<span class="cat-pill is-verified" title="Survived a 67-prompt behavioral screen — coherent ${pct(p.scr.coherent)} · degenerate ${pct(p.scr.degenerate)} · concept ${pct(p.scr.concept)}. The effect is real; rates are honest.">screened ✓</span>`
+                    : `<span class="cat-pill is-candidate" title="Community-proposed candidate — not yet screened. Plug the coordinates in and see for yourself, then file a verdict.">candidate</span>`;
+                return `
+                <article class="card">
+                    <div class="card__top">
+                        <span class="coord">L${p.layer}·N${p.n}</span>
+                        <span style="display:inline-flex;gap:.3rem;">
+                            ${badge}
+                            <span class="cat-pill">${p.category}</span>
+                        </span>
+                    </div>
+                    <h3>${p.name}</h3>
+                    <p>${p.desc}</p>
+                    <div class="card__foot">
+                        <span class="dose ${doseCls(p.dose)}">dose ${fmtDose(p.dose)}</span>
+                        ${(p.extra || []).map(e => `<span class="dose ${doseCls(e.dose)}" title="the published companion neuron">+ L${e.layer}·N${e.n} ${fmtDose(e.dose)}</span>`).join('')}
+                        <button class="linklike" onclick="addPersonaToStack('${p.id}')">Add to stack ↓</button>
+                    </div>
+                </article>`;
+            }).join('')
+                : `<div class="empty" style="grid-column:1/-1;border:1px solid var(--line);border-top:0;">no neurons match — try "owl", "magic", or "L14"</div>`;
+        }
+
+        /* ============================ stack ============================ */
+        function renderStack() {
+            $('stackCount').textContent = stack.length + ' active';
+            $('stackList').innerHTML = stack.length ? stack.map((s, i) => `
+                <div class="stack-row">
+                    <div class="stack-row__head">
+                        <span class="name"><span class="slot-dot"></span>Slot ${i + 1} · ${s.name}</span>
+                        <button class="linklike" onclick="removeSlot(${i})" style="color:var(--down);">remove ✕</button>
+                    </div>
+                    <div class="stack-row__body">
+                        <div class="field"><label>Layer</label><input type="number" min="0" step="1" value="${s.layer}" onchange="setSlot(${i},'layer',this.value)"></div>
+                        <div class="field"><label>Neuron</label><input type="number" min="0" step="1" value="${s.n}" onchange="setSlot(${i},'n',this.value)"></div>
+                        <div class="field">
+                            <label>Dose <span class="dose-read ${doseCls(s.dose)}" style="float:right;text-transform:none;letter-spacing:0;">${fmtDose(s.dose)}</span></label>
+                            <input type="range" min="-2" max="2" step="0.1" value="${s.dose}" oninput="setSlot(${i},'dose',this.value, true)">
+                        </div>
+                    </div>
+                </div>`).join('')
+                : `<div class="empty" style="border:1px solid var(--line);">stack is empty — add neurons from the library, or hit RANDOM MIX</div>`;
+            renderPayload();
+        }
+        function renderPayload() {
+            const payload = { model: 'Qwen3.5-4B', neurons: stack.map(s => ({ layer: s.layer, n: s.n, dose: s.dose })) };
+            currentPayload = payload;
+            $('payloadPre').innerHTML = JSON.stringify(payload, null, 2)
+                .replace(/"(\w+)":/g, '<span class="k">"$1"</span>:')
+                .replace(/: (-?\d+\.?\d*)/g, (m, num) => ': <span class="' + (Number(num) < 0 ? 'neg' : 'num') + '">' + num + '</span>');
+            updateExport(currentPayload);
+            renderVerdicts();
+        }
+        let currentPayload = null;
+
+        /* ============================ community verdicts ============================
+         * Stacks are nonlinear (pair coherence ≠ triple coherence), so the sandbox
+         * asks every visitor the only question that matters: did it work?
+         * Community tallies come from verdicts.json (merged via PRs); the visitor's
+         * own verdict is kept in localStorage until they share it.
+         * ================================================================== */
+        let communityVerdicts = {};
+        const qpsRepoIssueBase = 'https://github.com/ananymishra/qwen-personality-studio/issues/new';
+        fetch('../verdicts.json')
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+                if (!d || !Array.isArray(d.verdicts)) return;
+                d.verdicts.forEach(v => { communityVerdicts[v.key] = v; });
+                renderVerdicts();
+            })
+            .catch(() => { /* file:// — community tallies unavailable offline */ });
+
+        const stackKey = () => stack
+            .slice()
+            .sort((a, b) => (a.layer - b.layer) || (a.n - b.n))
+            .map(s => 'L' + s.layer + 'N' + s.n + (s.dose >= 0 ? '+' : '-') + Math.abs(Number(s.dose.toFixed(4))))
+            .join(';');
+
+        const myVerdicts = () => { try { return JSON.parse(localStorage.getItem('qps-verdicts') || '{}'); } catch (e) { return {}; } };
+        const saveMyVerdicts = m => { try { localStorage.setItem('qps-verdicts', JSON.stringify(m)); } catch (e) {} };
+
+        const decodeStackKey = k => k.split(';').map(t => {
+            const m = t.match(/^L(\d+)N(\d+)([+-])([\d.]+)$/);
+            return m ? `L${m[1]}·N${m[2]} ${m[3]}${m[4]}` : t;
+        }).join(' · ');
+        function renderVerdicts() {
+            const ledger = $('verdictsLedgerList');
+            if (ledger) {
+                const top = Object.entries(communityVerdicts)
+                    .sort((a, b) => b[1].good - a[1].good || b[1].bad - a[1].bad)
+                    .slice(0, 8);
+                ledger.innerHTML = top.length
+                    ? top.map(([k, v]) =>
+                        `<div style="display:flex; justify-content:space-between; gap:1rem; padding:.3rem 0; border-bottom:1px solid var(--line);">` +
+                        `<span>${decodeStackKey(k)}</span>` +
+                        `<span style="color:${v.good >= v.bad ? 'var(--accent)' : 'var(--faint)'}; white-space:nowrap;">${v.good} worked · ${v.bad} didn't</span></div>`).join('')
+                    : '<div style="color:var(--faint);">the ledger is empty — be the first: rate a stack above, then file the issue so it counts.</div>';
+            }
+            const key = stackKey();
+            const tally = $('verdictTally'), msg = $('verdictMsg'), share = $('verdictShare');
+            if (!key) {
+                tally.textContent = '';
+                msg.textContent = 'add neurons to the stack, then rate the combo.';
+                share.style.display = 'none';
+                return;
+            }
+            const cv = communityVerdicts[key];
+            tally.textContent = cv
+                ? `community: ${cv.good + cv.bad} tried · ${cv.good} worked · ${cv.bad} didn't`
+                : 'community: no verdicts for this mix yet';
+            const mine = myVerdicts()[key];
+            msg.textContent = mine
+                ? (mine === 'good' ? 'your verdict: worked ✓ (saved locally — PR it to verdicts.json or file the issue below to make it count)'
+                                   : 'your verdict: didn\'t ✕ (saved locally — PR it to verdicts.json or file the issue below to make it count)')
+                : '';
+            if (mine && qpsRepoIssueBase) {
+                share.href = qpsRepoIssueBase +
+                    '?title=' + encodeURIComponent(`Verdict: ${mine === 'good' ? 'worked' : "didn't work"} — ${key}`) +
+                    '&body=' + encodeURIComponent(`Stack key: ${key}\nStack: ${JSON.stringify(currentPayload && currentPayload.neurons || [])}\n\nWhat did the steered model output? (paste 1-2 example replies)\n\n---\nFiled from the Qwen Personality Studio — please mention your transformers/torch versions and GPU/CPU.`);
+                share.style.display = 'inline';
+            } else {
+                share.style.display = 'none';
+            }
+        }
+
+        function castVerdict(good) {
+            const key = stackKey();
+            if (!key) { toast('add neurons to the stack first'); return; }
+            const mine = myVerdicts();
+            mine[key] = good ? 'good' : 'bad';
+            saveMyVerdicts(mine);
+            renderVerdicts();
+            toast(good ? 'verdict saved: <b>worked ✓</b>' : 'verdict saved: <b>didn\'t ✕</b>');
+        }
+        $('voteGoodBtn').onclick = () => castVerdict(true);
+        $('voteBadBtn').onclick = () => castVerdict(false);
+
+        function addToStack(layer, n, dose, name) {
+            if (stack.length >= 6) { toast('that is a deep stack — coherence degrades fast past a few neurons'); return; }
+            stack.push({ layer, n, dose, name });
+            renderStack(); switchView('sandbox');
+            toast(`L${layer}·N${n} <b>${name}</b> → stack`);
+        }
+        window.addToStack = addToStack;
+        function addPersonaToStack(id) {
+            const p = masterPersonalities.find(x => x.id === id);
+            if (!p) return;
+            const push = e => {
+                if (stack.length >= 6) { toast('that is a deep stack — coherence degrades fast past a few neurons'); return; }
+                stack.push(e);
+            };
+            push({ layer: p.layer, n: p.n, dose: p.dose, name: p.name });
+            (p.extra || []).forEach(e => push({ layer: e.layer, n: e.n, dose: e.dose, name: p.name }));
+            renderStack(); switchView('sandbox');
+            toast(`<b>${p.name}</b> → stack${(p.extra || []).length ? ' (with its published companion neuron)' : ''}`);
+        }
+        window.addPersonaToStack = addPersonaToStack;
+        function removeSlot(i) { stack.splice(i, 1); renderStack(); }
+        window.removeSlot = removeSlot;
+        function setSlot(i, key, val, isRange) {
+            stack[i][key] = key === 'dose' ? parseFloat(val) : parseInt(val, 10) || 0;
+            renderStack();
+            if (isRange) {
+                const row = $('stackList').children[i];
+                if (row) {
+                    const read = row.querySelector('.dose-read');
+                    const d = stack[i].dose;
+                    read.className = 'dose-read ' + doseCls(d);
+                    read.textContent = fmtDose(d);
+                }
+            }
+        }
+        window.setSlot = setSlot;
+        function addSlot() {
+            if (stack.length >= 6) { toast('that is a deep stack — coherence degrades fast past a few neurons'); return; }
+            stack.push({ layer: 11, n: 5000, dose: 1.0, name: 'Custom neuron' });
+            renderStack();
+        }
+        window.addSlot = addSlot;
+        function clearStack() { stack = []; renderStack(); }
+        window.clearStack = clearStack;
+        function randomMix() {
+            if (!masterPersonalities.length) return;
+            const pool = [...masterPersonalities];
+            const pick = () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+            const a = pick(), b = pick();
+            stack = [a, b].flatMap(p => [
+                { layer: p.layer, n: p.n, dose: p.dose, name: p.name },
+                ...(p.extra || []).map(e => ({ layer: e.layer, n: e.n, dose: e.dose, name: p.name })),
+            ]);
+            renderStack(); switchView('sandbox');
+            toast('random mix: <b>' + a.name + '</b> + <b>' + b.name + '</b>');
+        }
+        window.randomMix = randomMix;
+        $('randomBtn').onclick = randomMix;
+        $('addSlotBtn').onclick = addSlot;
+        $('clearStackBtn').onclick = clearStack;
+        $('toExportBtn').onclick = () => switchView('export');
+        $('stackList').addEventListener('input', e => { /* slider live label is handled in setSlot */ });
+
+        /* ============================ export ============================ */
+        function hiJson(jsonObject, indent) {
+            return JSON.stringify(jsonObject, null, 2)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/"(\w+)":/g, '<span class="k">"$1"</span>:')
+                .replace(/: (-?\d+\.?\d*)/g, (m, num) => ': <span class="' + (Number(num) < 0 ? 'neg' : 'num') + '">' + num + '</span>');
+        }
+        function updateExport(payload) {
+            if (!payload) return;
+            const flat = JSON.stringify(payload);
+            document.querySelectorAll('#exportCurl, #exportCurlCode').forEach(el => {
+                el.innerHTML = `curl -s http://localhost:8791/api/agent/steer <span class="k">\\</span>\n  -H 'Content-Type: application/json' <span class="k">\\</span>\n  -d '${flat}'`;
+            });
+            document.querySelectorAll('#exportPython, #exportPythonCode').forEach(el => {
+                el.innerHTML = `import requests
+
+r = requests.post(
+    "http://localhost:8791/api/agent/steer",
+    json=${hiJson(payload)}
+)
+print(r.json())`;
+            });
+        }
+        document.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
+            const el = b.dataset.copy === 'curl' ? document.querySelector('#exportCurl') : document.querySelector('#exportPython');
+            copyText(el.innerText, (b.dataset.copy === 'curl' ? 'cURL' : 'Python') + ' copied to clipboard');
+        });
+        function copyText(text, msg) {
+            if (navigator.clipboard) { navigator.clipboard.writeText(text).then(() => toast(msg)); return; }
+            const ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            toast(msg);
+        }
+        window.copySnippet = copyText;
+
+        /* ============================ tabs ============================ */
+        function switchView(v) {
+            currentView = v;
+            ['library', 'sandbox', 'export'].forEach(k => {
+                $('view-' + k).hidden = k !== v;
+                document.querySelectorAll(`[data-view="${k}"]`).forEach(b => {
+                    b.classList.toggle('is-active', k === v);
+                    if ('ariaExpanded' in b) b.setAttribute('aria-expanded', String(k === v));
+                });
+            });
+            const glide = document.querySelector('.hnav__glide');
+            if (glide) {
+                const btn = document.querySelector('.hnav [data-view="' + v + '"]');
+                if (btn) { glide.style.left = btn.offsetLeft + 'px'; glide.style.width = btn.offsetWidth + 'px'; }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if ((v === 'sandbox' || v === 'export')) renderStack();
+        }
+        window.switchView = switchView;
+        document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => switchView(b.dataset.view));
+        addEventListener('DOMContentLoaded', () => { buildCats(); renderLibrary(); renderStack(); switchView('library'); });
+
+        /* ============================ toast ============================ */
+        let toastTimer = null;
+        function toast(html) {
+            $('toastMsg').innerHTML = html;
+            $('toast').classList.add('is-on');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => $('toast').classList.remove('is-on'), 2600);
+        }
+        window.showToast = toast;
+    </script>
+</body>
+</html>
