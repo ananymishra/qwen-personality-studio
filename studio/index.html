@@ -61,6 +61,17 @@
 .hnav__item.is-active { color: var(--bg); }
 .hnav__item:not(.is-active):hover { color: var(--ink); }
 .header-actions { display: flex; align-items: center; gap: .55rem; }
+/* random mix: quiet text button on desktop, icon-driven on phones */
+.random-btn { padding: .35rem .65rem; color: var(--muted); }
+.random-btn:hover { color: var(--ink); }
+.random-btn__txt { font-family: var(--mono); font-size: .6875rem; letter-spacing: .1em; text-transform: uppercase; }
+@media (max-width: 720px) {
+    .random-btn { width: 32px; height: 32px; padding: 0; place-items: center; }
+    .random-btn__txt { display: none; }
+}
+@media (pointer: coarse) {
+    .random-btn { width: 38px; height: 38px; }
+}
 /* intro */
 .intro { border-bottom: 1px solid var(--hairline); padding: clamp(2rem, 4vw, 3.25rem) var(--gutter) 0; }
 .intro__row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
@@ -288,8 +299,9 @@ input[type=range]::-moz-range-thumb { width: 13px; height: 13px; background: var
         </nav>
 
         <div class="header-actions">
-            <button class="btn btn--ghost btn--sm" id="randomBtn" title="Load two random neurons">
-                <span class="mono" style="letter-spacing:.08em;">RANDOM MIX</span>
+            <button class="btn btn--ghost btn--sm random-btn" id="randomBtn" title="Load two random neurons" aria-label="Load two random neurons">
+                <svg class="random-btn__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="m11 9-7-6"/><path d="M11 15l-7 6"/></svg>
+                <span class="random-btn__txt">Random mix</span>
             </button>
             <a class="btn btn--sm" href="https://github.com/ananymishra/qwen-personality-studio" target="_blank" rel="noopener">GitHub</a>
             <button class="theme-btn" id="themeBtn" aria-label="Toggle color theme" title="Toggle light / dark">
