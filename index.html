@@ -1,330 +1,848 @@
 <!DOCTYPE html>
-<html lang="en" class="motion">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qwen Personality Studio — neurons in the weights of an open-weights mind</title>
-    <meta name="description" content="A growing community registry of single-neuron activation-steering personas for Qwen LLMs. Browse the registry, mix neurons in a sandbox, rate what works, and export ready-to-run steering payloads.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Qwen Personality Studio — push one neuron, get a whole new mind</title>
+    <meta name="description" content="A community registry of activation-steering personas for Qwen LLMs. Push a single MLP neuron, browse the registry, stack neurons in the sandbox, and export ready-to-run steering payloads.">
+    <meta name="theme-color" content="#faf9f5">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234b3bb0'/%3E%3Crect x='14' y='14' width='4' height='4' rx='1' fill='white'/%3E%3C/svg%3E">
     <meta property="og:title" content="Qwen Personality Studio"/>
     <meta property="og:description" content="Push one MLP neuron. Get a whole new character. No fine-tuning, no system prompt."/>
     <meta property="og:type" content="website"/>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta property="og:image" content="docs/assets/social-card.png"/>
+    <meta name="twitter:card" content="summary_large_image"/>
     <script>
+        /* theme — resolved before first paint (no flash) */
         (function () {
-            var h = document.documentElement;
-            if (!matchMedia('(prefers-reduced-motion: reduce)').matches) h.classList.add('motion');
+            var t;
+            try { t = localStorage.getItem('qps-theme'); } catch (e) {}
+            document.documentElement.dataset.theme = (t === 'dark' || t === 'light') ? t
+                : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         })();
     </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link type="text/css" href="design.css" rel="stylesheet">
+    <!--
+      Design system: "research-lab minimal" + liquid glass, shared with the Studio.
+      Tokens adapted from Open Props (github.com/argyleink/open-props, MIT); component
+      conventions from GitHub Primer (github.com/primer/css, MIT). Type: IBM Plex (OFL).
+    -->
     <style>
-        :root {
-            --bg: #f1f1ec; --bg-alt: #e8e8e1; --fg: #121316; --ink-rgb: 18,19,22;
-            --muted: #5b5e66; --faint: #8a8d94;
-            --line: rgba(18, 19, 22, .14); --line-strong: rgba(18, 19, 22, .30);
-            --accent: #4b3bb0; --accent-ink: #fff;
-            --up: #1f6f4a; --down: #a4321f;
-            --font-display: "Archivo", system-ui, sans-serif;
-            --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-            --ease-out: cubic-bezier(.16, 1, .3, 1);
-            --header-h: 4.25rem; --gutter: clamp(1rem, .55rem + 1.8vw, 2.5rem);
+        main { overflow-x: clip; }
+        section { padding-block: clamp(3rem, 7vw, 5rem); }
+
+        /* ------------------------------ hero ------------------------------ */
+        .hero { position: relative; padding-block: clamp(3rem, 6vw, 4.5rem) clamp(2.5rem, 5vw, 4rem); }
+        .aurora { position: absolute; inset: -40% -20% 0; z-index: 0; pointer-events: none; }
+        .aurora i { position: absolute; display: block; border-radius: 50%; filter: blur(90px); opacity: .5; }
+        .aurora i:first-child {
+            width: 56%; height: 80%; right: 0; top: -12%;
+            background: radial-gradient(closest-side, rgb(112 88 235 / .30), transparent 72%);
+            animation: drift1 26s ease-in-out infinite alternate;
         }
-        * { box-sizing: border-box; }
-        body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-display); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
-        a { color: inherit; }
-        ::selection { background: var(--accent); color: var(--accent-ink); }
-        ::-webkit-scrollbar { width: 10px; } ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: rgba(18,19,22,.25); border: 3px solid var(--bg); border-radius: 6px; }
-        .mono { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .01em; }
-        .kicker { font-family: var(--font-mono); font-size: .6875rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-
-        .site-header { position: fixed; inset: 0 0 auto; z-index: 50; height: var(--header-h); padding-inline: var(--gutter); display: flex; align-items: center; justify-content: space-between; background: color-mix(in srgb, var(--bg) 97%, transparent); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); }
-        .brand { display: inline-flex; align-items: center; gap: .65rem; text-decoration: none; }
-        .brand__mark { position: relative; width: 30px; height: 30px; border: 1px solid var(--line-strong); display: grid; place-items: center; background: var(--bg-alt); }
-        .brand__cell { width: 8px; height: 8px; background: var(--accent); animation: cellpulse 2.6s cubic-bezier(.16, 1, .3, 1) infinite; }
-        @keyframes cellpulse { 0%, 100% { transform: scale(.7); opacity: .55; } 50% { transform: scale(1.15); opacity: 1; } }
-        .brand__name { font-weight: 700; font-size: .95rem; letter-spacing: -.01em; }
-        .brand__name small { display: block; font-family: var(--font-mono); font-weight: 500; font-size: .625rem; color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
-        .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem 1.1rem; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); font-size: .8125rem; font-weight: 600; text-decoration: none; transition: background .25s, color .25s, border-color .25s, transform .25s var(--ease-out); }
-        .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); transform: translateY(-1px); }
-        .btn--ghost { background: transparent; color: var(--fg); border-color: var(--line-strong); }
-        .btn--ghost:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-        .btn--sm { padding: .35rem .75rem; font-size: .75rem; }
-
-        main { padding-top: var(--header-h); }
-        section { border-bottom: 1px solid var(--line); padding: clamp(2rem, 4vw, 3.5rem) var(--gutter); }
-        .hero h1 { margin: .3em 0 0; font-size: clamp(2.6rem, 1rem + 7vw, 6.2rem); font-weight: 800; line-height: .97; letter-spacing: -.028em; }
+        .aurora i:last-child {
+            width: 46%; height: 70%; left: -8%; bottom: -18%;
+            background: radial-gradient(closest-side, rgb(235 148 88 / .14), transparent 72%);
+            animation: drift2 32s ease-in-out infinite alternate;
+        }
+        html[data-theme="dark"] .aurora i { opacity: .55; }
+        html[data-theme="dark"] .aurora i:first-child { background: radial-gradient(closest-side, rgb(122 96 250 / .35), transparent 72%); }
+        @keyframes drift1 { to { transform: translate3d(-70px, 48px, 0) scale(1.14); } }
+        @keyframes drift2 { to { transform: translate3d(56px, -40px, 0) scale(1.1); } }
+        #heroField { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+        .hero .container { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: var(--gap, 3rem); align-items: center; }
+        .hero .kicker { color: var(--accent); margin-bottom: var(--sp-3, .75rem); }
+        .hero h1 { font-size: clamp(2.4rem, .6rem + 4.6vw, 4.4rem); font-weight: 700; line-height: 1.06; letter-spacing: -.03em; text-wrap: balance; }
         .hero h1 em { font-style: normal; color: var(--accent); }
-        .hero__sub { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.25rem 3rem; margin-top: 1.6rem; }
-        .hero__lede { max-width: 38rem; color: var(--muted); font-size: .95rem; margin: 0; }
-        .hero__actions { display: flex; flex-direction: column; align-items: flex-start; gap: .8rem; }
-        .hero__target { color: var(--faint); letter-spacing: .14em; text-transform: uppercase; margin: 0; }
-        .cta-row { display: flex; gap: .75rem; flex-wrap: wrap; }
-        .panels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-        @media (max-width: 900px) { .panels { grid-template-columns: 1fr; } }
-        .panel { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 1.6rem 1.5rem; transition: background .2s; }
-        .panel:hover { background: var(--bg-alt); }
-        .panel h3 { margin: .9rem 0 .45rem; font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em; }
-        .panel p { margin: 0; font-size: .82rem; color: var(--muted); }
-        .panel a.more { display: inline-flex; gap: .45em; align-items: center; margin-top: .9rem; font-size: .75rem; font-weight: 600; text-decoration: none; color: var(--accent); }
-        .panel a.more:hover { text-decoration: underline; text-underline-offset: 3px; }
-        .panel i { font-style: normal; color: var(--accent); font-size: 1rem; }
-        .section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: 1.25rem; }
-        .section-head h2 { margin: 0; font-size: clamp(1.4rem, 1rem + 1.6vw, 2.2rem); font-weight: 700; letter-spacing: -.02em; }
-        .motif { position: relative; height: 120px; overflow: hidden; }
-        .map { position: relative; height: clamp(280px, 46vh, 430px); border: 1px solid var(--line-strong); background: var(--bg-alt); cursor: crosshair; overflow: hidden; }
+        .hero__lede { max-width: 56ch; color: var(--muted); font-size: 1.02rem; margin-top: 1rem; }
+        .hero__cta { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: 2rem; }
+        .hero__target { margin-top: 1rem; font-family: var(--mono); font-size: .72rem; letter-spacing: .02em; color: var(--faint); }
+
+        /* registry console */
+        .console { padding: 1.25rem; border-radius: 14px; }
+        .console__head { display: flex; align-items: center; gap: .55rem; padding-bottom: .9rem; border-bottom: 1px solid var(--glass-edge); }
+        .console__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+        .console__head .mono { color: var(--faint); letter-spacing: .1em; }
+        .console__live { margin-left: auto; font-family: var(--mono); font-size: .625rem; letter-spacing: .12em; color: var(--accent); background: var(--accent-soft); padding: .2em .5em; border-radius: 4px; }
+        .console__body { transition: opacity .18s ease, transform .18s ease; padding-top: 1rem; min-height: 205px; }
+        .console__body.swap { opacity: 0; transform: translateY(6px); }
+        .console__name { font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em; }
+        .console__coord { font-family: var(--mono); font-size: .8rem; color: var(--muted); margin-top: .25rem; }
+        .console__chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .8rem; }
+        .chipd { font-family: var(--mono); font-size: .6875rem; padding: .18em .5em; border-radius: 4px; }
+        .chipd--dose { background: var(--accent-soft); color: var(--accent); }
+        .chipd--ok { background: var(--accent-soft); color: var(--accent); }
+        .chipd--cand { color: var(--faint); border: 1px dashed var(--hairline-strong); }
+        .chipd--cat { color: var(--muted); border: 1px solid var(--hairline); }
+        .console__desc { margin-top: .8rem; font-size: .85rem; color: var(--muted); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .console .btn { margin-top: 1rem; width: 100%; }
+        .console__hint { margin-top: .55rem; text-align: center; font-family: var(--mono); font-size: .625rem; letter-spacing: .08em; color: var(--faint); }
+        .console__foot { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--glass-edge); text-align: center; }
+        .console__foot a { font-size: .8125rem; font-weight: 500; color: var(--accent); text-decoration: none; }
+        .console__foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+        /* ------------------------- coordinates ticker ------------------------- */
+        .band-ticker { padding-block: 1.1rem; border-block: 1px solid var(--hairline); }
+        .ticker { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+        .ticker__track { display: flex; gap: .65rem; width: max-content; animation: tick 52s linear infinite; }
+        .ticker:hover .ticker__track { animation-play-state: paused; }
+        @keyframes tick { to { transform: translateX(-50%); } }
+        .tk-chip {
+            display: inline-flex; align-items: baseline; gap: .55em; white-space: nowrap;
+            font-family: var(--mono); font-size: .72rem; letter-spacing: .02em;
+            padding: .5em 1em; border-radius: 999px;
+            background: var(--glass); border: 1px solid var(--glass-edge);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            color: var(--muted);
+            box-shadow: inset 0 1px 0 var(--hl);
+        }
+        .tk-coord { color: var(--ink); font-weight: 600; }
+        .tk-dose.is-up { color: var(--up); }
+        .tk-dose.is-down { color: var(--down); }
+        .tk-ok { color: var(--accent); font-weight: 600; }
+        .band-ticker .cap { text-align: center; margin-top: .8rem; font-family: var(--mono); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+
+        /* -------------------------------- map -------------------------------- */
+        .section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .75rem; margin-bottom: 1.5rem; }
+        .section-head h2 { font-size: clamp(1.35rem, .9rem + 1.1vw, 1.75rem); font-weight: 600; letter-spacing: -.02em; margin: 0; }
+        .section-head .meta { font-family: var(--mono); font-size: .72rem; letter-spacing: .02em; color: var(--faint); }
+        .map-panel { border-radius: 14px; overflow: hidden; }
+        .map { position: relative; height: clamp(300px, 44vh, 440px); background: color-mix(in srgb, var(--surface) 55%, transparent); cursor: crosshair; }
         .map canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-        .map-cap { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: baseline; padding: .55rem .9rem; border: 1px solid var(--line-strong); border-top: 0; }
-        .map-cap .mono { color: var(--faint); font-size: .6875rem; letter-spacing: .1em; }
-        footer { padding: 1.4rem var(--gutter) 2.4rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; }
-        footer .mono { color: var(--faint); }
-        footer a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
-        footer a:hover { color: var(--accent); }
-        .motion .reveal { opacity: 0; transform: translateY(14px); animation: reveal .7s var(--ease-out) forwards; }
-        .motion .reveal.d1 { animation-delay: .08s; } .motion .reveal.d2 { animation-delay: .16s; } .motion .reveal.d3 { animation-delay: .24s; }
-        @keyframes reveal { to { opacity: 1; transform: none; } }
-        @media (prefers-reduced-motion: reduce) { .motion * { animation: none !important; } }
+        .map-cap { display: flex; flex-wrap: wrap; gap: .5rem 2rem; justify-content: space-between; padding: .6rem 1rem; border-top: 1px solid var(--glass-edge); }
+        .map-cap .mono { color: var(--faint); font-size: .7rem; letter-spacing: .02em; }
+        .swatch { display: inline-block; width: 8px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: .3rem; }
+
+        /* -------------------------------- steps -------------------------------- */
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .step { padding: 1.5rem 1.4rem; border-radius: 14px; }
+        .step__num { font-family: var(--mono); font-size: .6875rem; font-weight: 600; letter-spacing: .12em; color: var(--accent); }
+        .step h3 { margin: .55rem 0 .35rem; font-size: 1.02rem; font-weight: 600; letter-spacing: -.01em; }
+        .step p { margin: 0; font-size: .875rem; color: var(--muted); }
+
+        /* ------------------------------- panels ------------------------------- */
+        .panels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .panel { padding: 1.5rem 1.4rem; border-radius: 14px; display: flex; flex-direction: column; align-items: flex-start; transition: border-color .15s ease, transform .25s cubic-bezier(.22, 1, .36, 1); }
+        .panel:hover { transform: translateY(-3px); }
+        .panel__icon { color: var(--accent); margin-bottom: 1rem; }
+        .panel h3 { font-size: 1.02rem; font-weight: 600; letter-spacing: -.01em; margin-bottom: .4rem; }
+        .panel p { font-size: .875rem; color: var(--muted); margin: 0; }
+        .panel .more { display: inline-flex; align-items: center; gap: .4em; margin-top: 1.25rem; font-size: .8125rem; font-weight: 500; color: var(--accent); text-decoration: none; }
+        .panel p + .more { margin-top: 1.25rem; }
+        .panel .more:hover { text-decoration: underline; text-underline-offset: 3px; }
+        .panel .more .arr { transition: transform .15s ease; }
+        .panel .more:hover .arr { transform: translateX(3px); }
+        .mono-chip { font-family: var(--mono); font-size: .68rem; color: var(--ink); background: var(--accent-soft); padding: .15rem .4rem; border-radius: 4px; }
+
+        /* ------------------------------ terminal ------------------------------ */
+        .term { border-radius: 14px; overflow: hidden; }
+        .term__bar { display: flex; align-items: center; gap: .45rem; padding: .7rem 1rem; border-bottom: 1px solid var(--glass-edge); }
+        .term__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--hairline-strong); }
+        .term__bar .mono { color: var(--faint); margin-left: .5rem; }
+        .term .btn--sm { margin-left: auto; }
+        .term pre {
+            margin: 0; padding: 1.2rem 1.3rem; overflow-x: auto;
+            background: #161614; color: #d8d8d0; border-radius: 0;
+            font-family: var(--mono); font-size: .78rem; line-height: 1.7;
+        }
+        .term pre .k { color: #b9a8ff; }
+        .term pre .c { color: #75726a; }
+        .term pre .s { color: #86c3a1; }
+
+        @media (max-width: 980px) {
+            .hero .container { grid-template-columns: 1fr; gap: 2.25rem; }
+            .console { max-width: 430px; }
+            .steps, .panels { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 720px) {
+            .site-header .brand small { display: none; }
+            .nav .btn--ghost { display: none; }   /* GitHub stays in the footer + repo */
+        }
+        /* phones: mobile-native rhythm */
+        .hint-tap { display: none; }
+        @media (pointer: coarse) {
+            .hint-hover { display: none; }
+            .hint-tap { display: inline; }
+            .map { touch-action: pan-y; }        /* taps probe; vertical swipes scroll */
+        }
+        @media (max-width: 520px) {
+            .brand > span:not(.brand__mark) { display: none; }     /* mark + CTA only — logo is the identity */
+            .hero { padding-block: 2rem 2.25rem; }
+            .hero .container { gap: 1.9rem; }
+            .hero h1 { font-size: clamp(2.05rem, .6rem + 8.4vw, 2.9rem); }
+            .hero__lede { font-size: .95rem; }
+            .hero__cta { flex-direction: column; align-items: stretch; }
+            .hero__cta .btn { width: 100%; padding-block: .8rem; }
+            .console { padding: 1.1rem; border-radius: 12px; }
+            .console .btn { min-height: 48px; }
+            .console__body { min-height: 0; }
+            section { padding-block: 2.25rem; }
+            .steps .step, .panels .panel { padding: 1.15rem 1.05rem; border-radius: 12px; }
+            .term pre { font-size: .68rem; padding: 1rem; }
+            .map { height: clamp(260px, 58vw, 340px); }
+            .map-cap { flex-direction: column; gap: .25rem; }
+            .tk-chip { font-size: .68rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .aurora i { animation: none; }
+            .ticker__track { animation: none; }
+            .ticker { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+            .panel:hover { transform: none; }
+        }
+
+        /* ---- mobile drawer menu ---- */
+        .menu-btn {
+            display: none;
+            width: 38px; height: 38px;
+            flex: none;
+            border: 1px solid var(--hairline);
+            border-radius: 9px;
+            background: var(--glass);
+            -webkit-backdrop-filter: blur(12px) saturate(1.4);
+            backdrop-filter: blur(12px) saturate(1.4);
+            color: var(--ink);
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        #how { scroll-margin-top: calc(var(--header-h) + 14px); }
+        .drawer { position: fixed; inset: 0; z-index: 90; visibility: hidden; }
+        .drawer.is-open { visibility: visible; }
+        .drawer__scrim { position: absolute; inset: 0; background: rgb(20 20 18 / .35); opacity: 0; transition: opacity .3s ease; }
+        .drawer.is-open .drawer__scrim { opacity: 1; }
+        .drawer__panel {
+            position: absolute; top: 0; bottom: 0; left: 0;
+            width: min(320px, 88vw);
+            display: flex; flex-direction: column;
+            padding: 1rem 1.15rem calc(1.2rem + env(safe-area-inset-bottom));
+            background: var(--glass-strong);
+            -webkit-backdrop-filter: blur(20px) saturate(1.4);
+            backdrop-filter: blur(20px) saturate(1.4);
+            border-right: 1px solid var(--glass-edge);
+            box-shadow: var(--shadow);
+            transform: translateX(-102%);
+            transition: transform .3s cubic-bezier(.32, .72, .28, 1);
+        }
+        .drawer.is-open .drawer__panel { transform: none; }
+        .drawer__head { display: flex; align-items: center; gap: .65rem; padding-bottom: .9rem; border-bottom: 1px solid var(--hairline); }
+        .drawer__brand { display: flex; flex-direction: column; gap: .15rem; flex: 1; min-width: 0; }
+        .drawer__brand b { font-size: .92rem; font-weight: 650; letter-spacing: -.01em; }
+        .drawer__brand small { font-size: .64rem; color: var(--faint); letter-spacing: .16em; text-transform: uppercase; }
+        .drawer__close {
+            width: 36px; height: 36px; flex: none;
+            display: grid; place-items: center;
+            border: 1px solid var(--hairline); border-radius: 9px;
+            background: none; color: var(--muted);
+            touch-action: manipulation;
+        }
+        .drawer__links { display: flex; flex-direction: column; padding: .45rem 0; }
+        .drawer__link {
+            display: flex; align-items: center; gap: .8rem;
+            padding: .85rem .3rem;
+            border-bottom: 1px solid var(--hairline);
+            text-decoration: none; color: var(--ink);
+            font-size: .95rem; font-weight: 500;
+        }
+        .drawer__link i { font-style: normal; font-family: var(--mono); font-size: .68rem; color: var(--faint); }
+        .drawer__link .arr { margin-left: auto; color: var(--faint); transition: transform .18s ease, color .18s ease; }
+        .drawer__link:hover .arr, .drawer__link:active .arr { transform: translateX(3px); color: var(--accent); }
+        .drawer__link--cta { color: var(--accent); font-weight: 600; }
+        .drawer__foot { margin-top: auto; color: var(--faint); font-size: .66rem; letter-spacing: .16em; text-transform: uppercase; }
+        @media (max-width: 720px) {
+            .menu-btn { display: inline-grid; }
+        }
     </style>
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="index.html" aria-label="Qwen Personality Studio home">
-            <span class="brand__mark" aria-hidden="true"><span class="brand__cell"></span></span>
-            <span class="brand__name">Personality Studio<small>Qwen steering lab</small></span>
-        </a>
-        <nav style="display:flex; align-items:center; gap:.75rem;">
-            <a class="btn btn--ghost btn--sm" href="https://github.com/ananymishra/qwen-personality-studio" target="_blank" rel="noopener">GitHub</a>
-            <a class="btn btn--sm" href="studio/">Open the Studio</a>
-        </nav>
+        <div class="container site-header__inner">
+            <button class="menu-btn glass" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="10" y1="17" x2="20" y2="17"/></svg>
+            </button>
+            <a class="brand" href="index.html" aria-label="Qwen Personality Studio home">
+                <span class="brand__mark" aria-hidden="true"></span>
+                <span>Qwen Personality Studio<small>steering registry</small></span>
+            </a>
+            <nav class="nav" style="display:flex; align-items:center; gap:.5rem;" aria-label="Main">
+                <a class="btn btn--ghost btn--sm" href="https://github.com/ananymishra/qwen-personality-studio" target="_blank" rel="noopener">GitHub</a>
+                <button class="theme-btn" id="themeBtn" aria-label="Toggle color theme" title="Toggle light / dark">
+                    <svg class="i-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="i-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                </button>
+                <a class="btn btn--primary btn--sm" href="studio/">Open the Studio</a>
+            </nav>
+        </div>
     </header>
 
+    <!-- mobile drawer menu -->
+    <div class="drawer" id="drawer" aria-hidden="true">
+        <div class="drawer__scrim" data-close></div>
+        <nav class="drawer__panel" aria-label="Site menu">
+            <div class="drawer__head">
+                <span class="brand__mark" aria-hidden="true"></span>
+                <div class="drawer__brand">
+                    <b>Qwen Personality Studio</b>
+                    <small class="mono">steering registry</small>
+                </div>
+                <button class="drawer__close" id="drawerClose" aria-label="Close menu">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="drawer__links">
+                <a class="drawer__link" href="#registry" data-close><i>01</i>The registry, mapped<span class="arr">&rarr;</span></a>
+                <a class="drawer__link" href="#how" data-close><i>02</i>How a persona gets here<span class="arr">&rarr;</span></a>
+                <a class="drawer__link" href="#inside" data-close><i>03</i>What's inside<span class="arr">&rarr;</span></a>
+                <a class="drawer__link" href="#run" data-close><i>04</i>Run one in your terminal<span class="arr">&rarr;</span></a>
+                <a class="drawer__link drawer__link--cta" href="studio/" data-close>Open the Studio<span class="arr">&rarr;</span></a>
+                <a class="drawer__link" href="https://github.com/ananymishra/qwen-personality-studio" target="_blank" rel="noopener">GitHub<span class="arr">&#8599;</span></a>
+            </div>
+            <p class="drawer__foot mono">MIT &middot; RESEARCH TOOLING &middot; QWEN3.5-4B</p>
+        </nav>
+    </div>
+
     <main>
+        <!-- ============================== HERO ============================== -->
         <section class="hero">
-            <p class="kicker reveal">Activation steering · Mechanistic interpretability</p>
-            <h1 class="reveal">Push one neuron.<br>Get a whole<br><em>new mind.</em></h1>
-            <div class="hero__sub reveal d1">
-                <p class="hero__lede">
-                    Single MLP neurons in Qwen3.5-4B encode full personas — cartoon mascots, cosmic oracles, Microsoft-branded circuits.
-                    Inject one residual-normalized delta at inference time and the model's entire character changes.
-                    This repository is the community registry where those discoveries live: add the neurons you find,
-                    stack any combination in the sandbox for ready-to-run exports, and see the community verdicts
-                    on which mixes actually worked.
-                </p>
-                <div class="hero__actions">
-                    <p class="mono hero__target">Target · Qwen3.5-4B · MLP · down_proj input</p>
-                    <div class="cta-row">
-                        <a class="btn" href="studio/">Open the Studio</a>
+            <div class="aurora" aria-hidden="true"><i></i><i></i></div>
+            <canvas id="heroField" aria-hidden="true"></canvas>
+            <div class="container">
+                <div>
+                    <p class="kicker reveal">Activation steering &middot; community registry</p>
+                    <h1 class="reveal" style="--d:.06s;">Push one neuron.<br>Get a whole <em>new mind.</em></h1>
+                    <p class="hero__lede reveal" style="--d:.12s;">
+                        Single MLP neurons inside Qwen3.5-4B encode entire personas — cartoon mascots, cosmic oracles,
+                        Microsoft-branded circuits. Inject one residual-normalized delta at inference time and the
+                        model's whole character changes. This is the registry where those discoveries live
+                        &mdash; browsable, stackable, exportable.
+                    </p>
+                    <div class="hero__cta reveal" style="--d:.18s;">
+                        <a class="btn btn--primary" href="studio/">Open the Studio</a>
                         <a class="btn btn--ghost" href="https://github.com/ananymishra/qwen-personality-studio#option-2-python-quickstart">Python quickstart</a>
+                    </div>
+                    <p class="hero__target reveal" style="--d:.24s;">Target &middot; Qwen3.5-4B &middot; MLP &middot; down_proj input</p>
+                </div>
+
+                <aside class="console glass reveal" data-spotlight style="--d:.2s;" aria-label="Live registry preview">
+                    <div class="console__head">
+                        <span class="console__dot" aria-hidden="true"></span>
+                        <span class="mono">REGISTRY PEEK</span>
+                        <span class="console__live">LIVE</span>
+                    </div>
+                    <div class="console__body" id="consoleBody">
+                        <p class="console__name" id="cName">—</p>
+                        <p class="console__coord" id="cCoord">loading registry…</p>
+                        <div class="console__chips" id="cChips"></div>
+                        <p class="console__desc" id="cDesc"></p>
+                        <button class="btn btn--primary" id="pushBtn" type="button">Push a neuron &rarr;</button>
+                        <p class="console__hint">CLICK TO CYCLE REAL REGISTRY ENTRIES</p>
+                    </div>
+                    <div class="console__foot">
+                        <a href="studio/">Open the Studio for the full library &rarr;</a>
+                    </div>
+                </aside>
+            </div>
+        </section>
+
+        <!-- ========================= COORDINATE TICKER ========================= -->
+        <section class="band-ticker" aria-label="Sample of registry coordinates">
+            <div class="ticker"><div class="ticker__track" id="tickerTrack"></div></div>
+            <p class="cap">fresh coordinates &middot; straight from personalities.json &middot; hover pauses</p>
+        </section>
+
+        <!-- ============================== MAP ============================== -->
+        <section id="registry" style="scroll-margin-top: calc(var(--header-h) + 10px);" tabindex="-1">
+            <div class="container">
+                <div class="section-head reveal">
+                    <h2>The registry, mapped</h2>
+                    <span class="meta">one mark per discovered neuron &middot; <span class="hint-hover">hover to inspect a coordinate</span><span class="hint-tap">tap a neuron to inspect it</span></span>
+                </div>
+            </div>
+            <div class="container reveal" style="--d:.08s;">
+                <div class="map-panel glass">
+                    <div class="map" aria-label="Interactive map of discovered persona neurons across Qwen's layers"><canvas id="mapCv"></canvas></div>
+                    <div class="map-cap">
+                        <span class="mono"><span class="swatch" style="background:var(--accent);"></span>screened persona neuron &nbsp;&middot;&nbsp; <span class="swatch" style="background:var(--hairline-strong);"></span>candidate neuron</span>
+                        <span class="mono">MLP &middot; down_proj input &middot; L0 &rarr; L26</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section style="padding-bottom: clamp(2rem, 4vw, 3.5rem);">
-            <div class="section-head reveal"><h2>Where the personas live</h2><span class="mono">one mark per discovered neuron · hover to probe</span></div>
-            <div class="map reveal d1" aria-label="Interactive map of discovered persona neurons across Qwen's layers"><canvas id="mapCv"></canvas></div>
-            <div class="map-cap reveal d2 mono">
-                <span><span style="color:var(--accent);">■</span> persona neuron · <span style="color:var(--faint);">■</span> dark neuron · hover to probe a coordinate</span>
-                <span>MLP · down_proj input · L0 → L26</span>
+        <!-- ============================= STEPS ============================= -->
+        <section id="how" tabindex="-1">
+            <div class="container">
+                <div class="section-head reveal">
+                    <h2>How a persona gets here</h2>
+                    <span class="meta">open pipeline &middot; every claim carries its evidence</span>
+                </div>
+                <div class="steps">
+                    <div class="step glass reveal" data-spotlight style="--d:0s;">
+                        <span class="step__num">01 / DISCOVER</span>
+                        <h3>Find a coordinate</h3>
+                        <p>Community members probe individual MLP down_proj neurons while the model runs. When one choice shifts the model's entire character, the layer &middot; neuron coordinate earns an entry.</p>
+                    </div>
+                    <div class="step glass reveal" data-spotlight style="--d:.08s;">
+                        <span class="step__num">02 / SCREEN</span>
+                        <h3>Run the suite</h3>
+                        <p>Entries that survive a 67-prompt behavioral suite are marked <b style="color:var(--accent);">SCREENED &#10003;</b> — you can trust the label. Everything else ships as an unscreened candidate.</p>
+                    </div>
+                    <div class="step glass reveal" data-spotlight style="--d:.16s;">
+                        <span class="step__num">03 / VERIFY</span>
+                        <h3>Rate the stacks</h3>
+                        <p>Stacks are nonlinear in the residual stream. The community rates every shared mix — verdicts land in the ledger, so you know what worked before you run it.</p>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <section>
-            <div class="section-head reveal"><h2>What's inside</h2><span class="mono">MIT · python ≥ 3.10 · transformers ≥ 4.40</span></div>
-            <div class="panels reveal d1">
-                <div class="panel">
-                    <i>◌</i>
-                    <h3>The Registry</h3>
-                    <p>A growing roster of community-discovered archetypes — Evil Qwen, Yuki-Chan, Cosmic Unicorn, Fate &amp; Destiny — each pinned to an exact layer/neuron coordinate, dose, and mode.</p>
-                    <a class="more" href="personalities.json">personalities.json →</a>
+        <!-- ============================ PANELS ============================ -->
+        <section id="inside" tabindex="-1" style="padding-top:0; scroll-margin-top: calc(var(--header-h) + 14px);">
+            <div class="container">
+                <div class="section-head reveal">
+                    <h2>What's inside</h2>
+                    <span class="meta">MIT &middot; python &ge; 3.10 &middot; transformers &ge; 4.40</span>
                 </div>
-                <div class="panel">
-                    <i>◫</i>
-                    <h3>The Sandbox</h3>
-                    <p>Stack any number of neurons, drag dose sliders from −2.0 to +2.0, then export the exact JSON, cURL, and Python needed to reproduce your mix. Stacks are nonlinear — so the community rates every shared combo.</p>
-                    <a class="more" href="studio/">Open the studio →</a>
+                <div class="panels">
+                    <div class="panel glass reveal" data-spotlight style="--d:0s;">
+                        <span class="panel__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+                        </span>
+                        <h3>The Registry</h3>
+                        <p>A growing roster of community-discovered archetypes — Evil Qwen, Yuki-Chan, Cosmic Unicorn, Fate &amp; Destiny — each pinned to an exact layer/neuron coordinate, dose, and mode, with its evidence carried inline.</p>
+                        <a class="more" href="personalities.json">personalities.json <span class="arr">&rarr;</span></a>
+                    </div>
+                    <div class="panel glass reveal" data-spotlight style="--d:.08s;">
+                        <span class="panel__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2"/><line x1="4" y1="15" x2="20" y2="15"/><circle cx="15" cy="15" r="2"/></svg>
+                        </span>
+                        <h3>The Sandbox</h3>
+                        <p>Stack any number of neurons, drag dose sliders from &minus;2.0 to +2.0, then export the exact JSON, cURL, and Python needed to reproduce your mix. Stacks are nonlinear — so the community rates every shared combo.</p>
+                        <a class="more" href="studio/">Open the Studio <span class="arr">&rarr;</span></a>
+                    </div>
+                    <div class="panel glass reveal" data-spotlight style="--d:.16s;">
+                        <span class="panel__icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                        </span>
+                        <h3>Steer in Python</h3>
+                        <p><span class="mono-chip">qwen_steering</span> handles residual-norm calibration and hook plumbing — steer by persona id or raw coordinates, and mix as many neurons as you like.</p>
+                        <a class="more" href="https://github.com/ananymishra/qwen-personality-studio#option-2-python-quickstart">Quickstart <span class="arr">&rarr;</span></a>
+                    </div>
                 </div>
-                <div class="panel">
-                    <i>≡</i>
-                    <h3>Steer in Python</h3>
-                    <p><b class="mono" style="font-size:.72rem;">qwen_steering</b> handles residual-norm calibration and hook plumbing — steer by persona id or raw coordinates, and mix as many neurons as you like.</p>
-                    <a class="more" href="https://github.com/ananymishra/qwen-personality-studio#option-2-python-quickstart">Quickstart →</a>
+            </div>
+        </section>
+
+        <!-- ============================ TERMINAL ============================ -->
+        <section id="run" tabindex="-1" style="padding-top:0; scroll-margin-top: calc(var(--header-h) + 14px);">
+            <div class="container">
+                <div class="section-head reveal">
+                    <h2>Run one in your terminal</h2>
+                    <span class="meta">hooks removed on exit &middot; the model behaves normally again</span>
+                </div>
+                <div class="term glass reveal" style="--d:.08s;">
+                    <div class="term__bar">
+                        <span class="term__dot" aria-hidden="true"></span>
+                        <span class="mono">quickstart.py &mdash; real content from the README</span>
+                        <button class="btn btn--ghost btn--sm" id="copyBtn" type="button">Copy</button>
+                    </div>
+                    <pre><span class="c"># residual-norm calibration + hook registration are automatic</span>
+<span class="k">import</span> torch
+<span class="k">from</span> transformers <span class="k">import</span> AutoModelForCausalLM, AutoTokenizer
+<span class="k">from</span> qwen_steering.steering <span class="k">import</span> SteeringStack
+
+MODEL_ID = <span class="s">"Qwen/Qwen3.5-4B"</span>
+tokenizer = AutoTokenizer.<span class="k">from_pretrained</span>(MODEL_ID)
+model = AutoModelForCausalLM.<span class="k">from_pretrained</span>(
+    MODEL_ID, torch_dtype=torch.bfloat16, device_map=<span class="s">"auto"</span>)
+
+<span class="k">with</span> SteeringStack.from_personas(model, [<span class="s">"evil-qwen"</span>, <span class="s">"yuki-chan"</span>], tokenizer=tokenizer) <span class="k">as</span> stack:
+    <span class="k">print</span>(stack.describe())                                    <span class="c"># L14 N8949 dose=+1.00 ...</span>
+    <span class="k">print</span>(stack.generate(<span class="s">"Who are you?"</span>, max_new_tokens=<span class="s">150</span>))  <span class="c"># steered output</span></pre>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer>
-        <span class="mono">MIT LICENSE · RESEARCH TOOL — NOT FOR RAW DEPLOYMENT</span>
-        <span class="mono">THE NEURON MAZE IS MEANT FOR YOU — <a href="studio/">FIND THE CENTER</a></span>
-        <span class="mono">BUILT BY THE COMMUNITY FOR <a href="https://github.com/QwenLM/Qwen3">QWEN</a> · INSPIRED BY THE SINGLE-NEURON DISCOVERIES OF <a href="https://x.com/treetowntree" target="_blank" rel="noopener">@TREETOWNTREE</a></span>
+    <!-- ============================== FOOTER ============================== -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>MIT license &middot; research tooling &mdash; not for raw deployment</p>
+            <p>Built by the community for <a href="https://github.com/QwenLM/Qwen3">Qwen</a> &middot; inspired by the single-neuron discoveries of <a href="https://x.com/treetowntree" target="_blank" rel="noopener">@treetowntree</a> &middot; evil-qwen recipe by <a href="https://x.com/_lyraaaa_" target="_blank" rel="noopener">@_lyraaaa_</a> &middot; curated evidence from Martin Bowling's <a href="https://github.com/martinbowling/qwen-neuron-audit" target="_blank" rel="noopener">qwen-neuron-audit</a></p>
+            <p><a href="https://github.com/ananymishra/qwen-personality-studio">github.com/ananymishra/qwen-personality-studio</a></p>
+        </div>
     </footer>
 
     <script>
         (function () {
-            const cv = document.getElementById('mapCv'), ctx = cv.getContext('2d');
-            const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-            let W, H, dpr, rails = [], maxLayer = 26, nodes = [], links = [], pulse = null;
-            let mx = -1, my = -1, probe = null;
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            function railX(layer) {
-                const pad = 34;
-                return pad + (layer / maxLayer) * (W - pad * 2);
+            /* ------------------------------ drawer menu ------------------------------ */
+            const drawer = $('drawer');
+            const menuBtn = $('menuBtn');
+            const setMenu = open => {
+                drawer.classList.toggle('is-open', open);
+                drawer.setAttribute('aria-hidden', String(!open));
+                menuBtn.setAttribute('aria-expanded', String(open));
+                document.body.style.overflow = open ? 'hidden' : '';
+                if (open) $('drawerClose').focus(); else menuBtn.focus();
+            };
+            menuBtn.addEventListener('click', () => setMenu(true));
+            $('drawerClose').addEventListener('click', () => setMenu(false));
+            drawer.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', () => setMenu(false)));
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('is-open')) setMenu(false); });
+
+            /* ------------------------------ theme ------------------------------ */
+            $('themeBtn').addEventListener('click', () => {
+                const h = document.documentElement;
+                const next = h.dataset.theme === 'dark' ? 'light' : 'dark';
+                h.dataset.theme = next;
+                try { localStorage.setItem('qps-theme', next); } catch (e) {}
+                document.dispatchEvent(new CustomEvent('qps:theme'));
+            });
+
+            /* theme-color meta follows the toggle */
+            const tc = document.querySelector('meta[name="theme-color"]');
+            document.addEventListener('qps:theme', () => {
+                tc && (tc.content = document.documentElement.dataset.theme === 'dark' ? '#141413' : '#faf9f5');
+            });
+
+            /* --------------------------- scroll reveal --------------------------- */
+            if (REDUCE) {
+                document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+            } else {
+                const ro = new IntersectionObserver(es => es.forEach(e => {
+                    if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); }
+                }), { threshold: .12 });
+                document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
             }
 
-            function size() {
-                dpr = Math.min(devicePixelRatio || 1, 2);
-                W = cv.clientWidth; H = cv.clientHeight;
-                cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-                rails = [];
-                for (let l = 0; l <= maxLayer; l++) rails.push(l);
-                if (nodes.length) layout();
-            }
+            /* ------------------------- cursor spotlight ------------------------- */
+            document.addEventListener('pointermove', e => {
+                const s = e.target.closest('[data-spotlight]');
+                if (!s) return;
+                const r = s.getBoundingClientRect();
+                s.style.setProperty('--mx', ((e.clientX - r.left) / (r.width || 1) * 100) + '%');
+                s.style.setProperty('--my', ((e.clientY - r.top) / (r.height || 1) * 100) + '%');
+            }, { passive: true });
 
-            function layout() {
-                nodes.forEach(d => {
-                    d.x = railX(d.layer) + (d.jitter - .5) * 14;
-                    d.y = H * (.13 + .74 * d.fy);
-                });
-                // synapse links: each neuron to its two nearest neighbors
-                links = [];
-                const maxDist = Math.max(W / 18, 56);
-                for (let i = 0; i < nodes.length; i++) {
-                    const cand = [];
-                    for (let j = i + 1; j < nodes.length; j++) {
-                        const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
-                        const d2 = dx * dx + dy * dy;
-                        if (d2 < maxDist * maxDist) cand.push([j, d2]);
-                    }
-                    cand.sort((a, b) => a[1] - b[1]);
-                    for (let k = 0; k < Math.min(2, cand.length); k++) links.push([i, cand[k][0]]);
-                }
-            }
+            /* ------------------------------- data ------------------------------- */
+            let personas = [];
+            const fmtDose = d => (d > 0 ? '+' : '') + (Number.isInteger(d) ? d : d.toFixed(1));
 
-            function drew(now) { draw(now); }
-            function draw(now) {
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-                ctx.clearRect(0, 0, W, H);
-                const s = now / 1000;
+            /* theme-aware canvas palette — accent/dim are raw rgb for alpha composition */
+            const pal = () => document.documentElement.dataset.theme === 'dark' ? {
+                railA: 'rgba(235,233,221,.13)', railB: 'rgba(235,233,221,.055)', railLbl: 'rgba(235,233,221,.34)',
+                link: 'rgba(235,233,221,.10)', accent: '160,142,240', dim: '235,233,221',
+                pulse: 'rgba(160,142,240,1)',
+                tipBg: 'rgba(24,24,22,.94)', tipName: '#a08ef0', tipDim: 'rgba(235,233,221,.78)',
+            } : {
+                railA: 'rgba(26,26,24,.10)', railB: 'rgba(26,26,24,.045)', railLbl: 'rgba(26,26,24,.35)',
+                link: 'rgba(26,26,24,.08)', accent: '75,59,176', dim: '26,26,24',
+                pulse: 'rgba(75,59,176,.9)',
+                tipBg: 'rgba(250,249,245,.95)', tipName: '#4b3bb0', tipDim: 'rgba(26,26,24,.75)',
+            };
 
-                // layer rails + labels
-                rails.forEach(l => {
-                    const x = railX(l);
-                    ctx.strokeStyle = l % 4 === 0 ? 'rgba(18,19,22,.10)' : 'rgba(18,19,22,.045)';
-                    ctx.beginPath(); ctx.moveTo(x, 8); ctx.lineTo(x, H - 26); ctx.stroke();
-                    if (l % 4 === 0) {
-                        ctx.fillStyle = 'rgba(18,19,22,.30)';
-                        ctx.font = '500 10px "IBM Plex Mono", monospace';
-                        ctx.textAlign = 'center';
-                        ctx.fillText('L' + l, x, H - 10);
-                    }
-                });
-
-                // synapse links
-                ctx.lineWidth = 1;
-                for (const [a, b] of links) {
-                    const A = nodes[a], B = nodes[b];
-                    ctx.strokeStyle = 'rgba(18,19,22,.09)';
-                    ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke();
-                }
-
-                // neurons
-                nodes.forEach(d => {
-                    const breathe = d.lit
-                        ? .62 + .33 * Math.sin(s * 1.5 + d.off)
-                        : .20 + .08 * Math.sin(s * .9 + d.off * 2.2);
-                    ctx.fillStyle = d.lit ? 'rgba(75,59,176,' + breathe + ')' : 'rgba(18,19,22,' + breathe + ')';
-                    const w = d.lit ? 4 : 3, h = d.lit ? 9 : 7;
-                    ctx.fillRect(d.x - w / 2, d.y - h / 2, w, h);
-                });
-
-                // probe: nearest neuron under the cursor
-                probe = null;
-                if (mx >= 0) {
-                    let best = null, bd = 46 * 46;
-                    for (const d of nodes) {
-                        const dx = d.x - mx, dy = d.y - my, dd = dx * dx + dy * dy;
-                        if (dd < bd) { bd = dd; best = d; }
-                    }
-                    probe = best;
-                    if (probe) {
-                        ctx.strokeStyle = 'rgba(75,59,176,.85)';
-                        ctx.lineWidth = 1.2;
-                        ctx.beginPath(); ctx.arc(probe.x, probe.y, 8, 0, Math.PI * 2); ctx.stroke();
-                        ctx.beginPath(); ctx.moveTo(probe.x - 12, probe.y); ctx.lineTo(probe.x - 9, probe.y);
-                        ctx.moveTo(probe.x + 9, probe.y); ctx.lineTo(probe.x + 12, probe.y);
-                        ctx.moveTo(probe.x, probe.y - 12); ctx.lineTo(probe.x, probe.y - 9);
-                        ctx.moveTo(probe.x, probe.y + 9); ctx.lineTo(probe.x, probe.y + 12);
-                        ctx.stroke();
-                        const label = (probe.scr ? '✓ ' : '') + probe.name + ' · L' + probe.layer + '·N' + probe.n;
-                        ctx.font = '600 10.5px "IBM Plex Mono", monospace';
-                        ctx.textAlign = 'left';
-                        const tw = ctx.measureText(label).width;
-                        let lx = probe.x + 14;
-                        if (lx + tw > W - 10) lx = probe.x - 14 - tw;
-                        const ly = probe.y - 12 < 16 ? probe.y + 20 : probe.y - 12;
-                        ctx.fillStyle = 'rgba(241,241,236,.92)';
-                        ctx.fillRect(lx - 5, ly - 11, tw + 10, 17);
-                        ctx.strokeStyle = probe.lit ? 'rgba(75,59,176,.7)' : 'rgba(18,19,22,.3)';
-                        ctx.strokeRect(lx - 5, ly - 11, tw + 10, 17);
-                        ctx.fillStyle = probe.lit ? '#4b3bb0' : 'rgba(18,19,22,.75)';
-                        ctx.fillText(label, lx, ly + 1);
-                    }
-                }
-
-                // a signal wandering the network
-                if (!reduce && links.length) {
-                    if (!pulse || s > pulse.end) {
-                        const li = links[Math.floor(Math.random() * links.length)];
-                        pulse = { a: li[0], b: li[1], start: s + .5, end: s + 2.8 };
-                    }
-                    const p = (s - pulse.start) / 1.8;
-                    if (p > 0 && p < 1) {
-                        const A = nodes[pulse.a], B = nodes[pulse.b];
-                        ctx.globalAlpha = Math.sin(p * Math.PI);
-                        ctx.fillStyle = '#4b3bb0';
-                        ctx.beginPath();
-                        ctx.arc(A.x + (B.x - A.x) * p, A.y + (B.y - A.y) * p, 2.8, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.globalAlpha = 1;
-                    }
-                }
-                if (!reduce) requestAnimationFrame(draw);
-                else if (probe) requestAnimationFrame(drew), probe = null; // reduced motion: redraw only on demand
-            }
-
-            // build the real map from the canonical dataset
             fetch('personalities.json')
                 .then(r => r.ok ? r.json() : null)
-                .then(d => {
-                    if (!d || !Array.isArray(d.personas)) return;
-                    maxLayer = Math.max.apply(null, d.personas.map(p => p.layer));
-                    nodes = d.personas.map(p => ({
-                        layer: p.layer,
-                        n: p.neuron,
-                        name: p.name,
-                        scr: !!p.screening,
-                        lit: !!p.screening,
-                        fy: (p.neuron % 1000) / 1000,
-                        jitter: ((p.neuron * 7) % 97) / 97,
-                        off: ((p.neuron * 83) % 628) / 100,
-                    }));
-                    size(); layout();
-                    if (reduce) draw(0);
-                })
-                .catch(() => { /* static rails remain */ });
+                .then(d => { if (d && Array.isArray(d.personas)) { personas = d.personas; initTicker(); initConsole(); initHeroField(); initMap(); } })
+                .catch(() => { /* static page remains */ });
 
-            cv.addEventListener('mousemove', e => {
-                const r = cv.getBoundingClientRect();
-                mx = e.clientX - r.left; my = e.clientY - r.top;
-                if (reduce) draw(performance.now());
+            /* ---------------------------- ticker ---------------------------- */
+            function initTicker() {
+                const track = $('tickerTrack');
+                const sorted = personas.slice().sort((a, b) => (b.screening ? 1 : 0) - (a.screening ? 1 : 0));
+                const half = sorted.slice(0, 20).map(p => {
+                    const span = document.createElement('span');
+                    span.className = 'tk-chip';
+                    span.innerHTML =
+                        '<span class="tk-coord">L' + p.layer + '&middot;N' + p.neuron + '</span>' +
+                        '<span>' + p.name.replace(/</g, '&lt;').toUpperCase() + '</span>' +
+                        '<span class="tk-dose ' + (p.dose > 0 ? 'is-up' : 'is-down') + '">' + fmtDose(p.dose) + '</span>' +
+                        (p.screening ? '<span class="tk-ok">&#10003;</span>' : '');
+                    return span;
+                });
+                half.forEach(c => track.appendChild(c));
+                const clone = document.createElement('div');
+                clone.style.display = 'contents';
+                half.forEach(c => clone.appendChild(c.cloneNode(true)));
+                track.appendChild(clone);
+            }
+
+            /* ------------------------ console (peek) ------------------------ */
+            let ci = 0, order = [];
+            function setConsole(p) {
+                $('cName').textContent = p.name;
+                $('cCoord').textContent = 'L' + p.layer + ' \u00b7 N' + p.neuron + ' \u00b7 dose ' + fmtDose(p.dose);
+                $('cChips').innerHTML =
+                    (p.screening ? '<span class="chipd chipd--ok">SCREENED &#10003;</span>'
+                                 : '<span class="chipd chipd--cand">CANDIDATE</span>') +
+                    '<span class="chipd chipd--cat">' + (p.category || 'entry').toUpperCase() + '</span>';
+                $('cDesc').textContent = p.description || '';
+            }
+            function initConsole() {
+                order = personas.slice().sort((a, b) => (b.screening ? 1 : 0) - (a.screening ? 1 : 0));
+                setConsole(order[0]);
+                $('pushBtn').addEventListener('click', () => {
+                    const body = $('consoleBody');
+                    body.classList.add('swap');
+                    setTimeout(() => {
+                        setConsole(order[ci = (ci + 1) % order.length]);
+                        body.classList.remove('swap');
+                    }, 180);
+                    heroPulse();
+                });
+            }
+
+            /* ------------------------- hero field ------------------------- */
+            const hero = { cv: $('heroField'), ctx: null, W: 0, H: 0, dpr: 1, dots: [], links: [], wave: null, t0: performance.now(), visible: true };
+            function heroSize() {
+                if (!hero.ctx) return;
+                hero.dpr = Math.min(devicePixelRatio || 1, 2);
+                hero.W = hero.cv.clientWidth; hero.H = hero.cv.clientHeight;
+                hero.cv.width = Math.round(hero.W * hero.dpr);
+                hero.cv.height = Math.round(hero.H * hero.dpr);
+                if (personas.length) heroLayout();
+            }
+            function heroLayout() {
+                const maxL = Math.max.apply(null, personas.map(p => p.layer));
+                hero.dots = personas.map(p => ({
+                    x: (0.06 + (p.layer / (maxL + 1)) * .88) * hero.W,
+                    y: hero.H * (0.16 + .68 * ((p.neuron % 1000) / 1000)),
+                    lit: !!p.screening, ph: (p.neuron * 7 % 628) / 100, r: 2.6,
+                }));
+                for (let i = 0; i < 26; i++) {
+                    hero.dots.push({
+                        x: Math.random() * hero.W, y: Math.random() * hero.H,
+                        lit: false, dark: true, ph: Math.random() * 6.28, r: 1.8,
+                    });
+                }
+                hero.links = [];
+                const maxD = 90;
+                for (let i = 0; i < hero.dots.length; i++) {
+                    const cand = [];
+                    for (let j = i + 1; j < hero.dots.length; j++) {
+                        const dx = hero.dots[i].x - hero.dots[j].x, dy = hero.dots[i].y - hero.dots[j].y;
+                        const d2 = dx * dx + dy * dy;
+                        if (d2 < maxD * maxD) cand.push([j, d2]);
+                    }
+                    cand.sort((a, b) => a[1] - b[1]);
+                    for (let k = 0; k < Math.min(2, cand.length); k++) hero.links.push([i, cand[k][0]]);
+                }
+            }
+            function heroPulse() {
+                if (REDUCE || !hero.dots.length) return;
+                const litIdx = hero.dots.map((d, i) => d.lit ? i : -1).filter(i => i >= 0);
+                if (!litIdx.length) return;
+                const o = hero.dots[litIdx[Math.floor(Math.random() * litIdx.length)]];
+                hero.wave = { x: o.x, y: o.y, t0: performance.now() };
+            }
+            function heroDraw(now) {
+                const c = hero.ctx, P = pal(), W = hero.W, H = hero.H, t = now / 1000;
+                c.setTransform(hero.dpr, 0, 0, hero.dpr, 0, 0);
+                c.clearRect(0, 0, W, H);
+                c.lineWidth = 1;
+                for (const [a, b] of hero.links) {
+                    const A = hero.dots[a], B = hero.dots[b];
+                    if (A.dark || B.dark) continue;
+                    c.strokeStyle = P.link;
+                    c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke();
+                }
+                for (const d of hero.dots) {
+                    const br = REDUCE ? 1 : (.72 + .28 * Math.sin(t * 1.3 + d.ph));
+                    if (d.dark) c.fillStyle = 'rgba(' + P.dim + ',' + (0.16 * br).toFixed(3) + ')';
+                    else if (d.lit) c.fillStyle = 'rgba(' + P.accent + ',' + Math.min(1, .68 * br + .22).toFixed(3) + ')';
+                    else c.fillStyle = 'rgba(' + P.dim + ',' + (.30 * br).toFixed(3) + ')';
+                    c.beginPath(); c.arc(d.x, d.y, d.r, 0, Math.PI * 2); c.fill();
+                }
+                if (hero.wave) {
+                    const w = hero.wave;
+                    const prog = Math.min(1, (now - w.t0) / 1150);
+                    const r = prog * Math.max(W, H) * .55;
+                    c.strokeStyle = 'rgba(' + P.accent + ',' + ((1 - prog) * .5).toFixed(3) + ')';
+                    c.lineWidth = 1.4;
+                    c.beginPath(); c.arc(w.x, w.y, r, 0, Math.PI * 2); c.stroke();
+                    for (const d of hero.dots) {
+                        if (d.dark) continue;
+                        const dd = Math.abs(Math.hypot(d.x - w.x, d.y - w.y) - r);
+                        if (dd < 26) {
+                            c.fillStyle = 'rgba(' + P.accent + ',' + (((1 - dd / 26)) * .9 * (d.lit ? 1 : .5)).toFixed(3) + ')';
+                            c.beginPath(); c.arc(d.x, d.y, d.r + 1.6, 0, Math.PI * 2); c.fill();
+                        }
+                    }
+                    if (prog >= 1) hero.wave = null;
+                }
+            }
+            function heroLoop(now) {
+                hero.t0 = now;
+                if (hero.visible && hero.dots.length) heroDraw(now);
+                requestAnimationFrame(heroLoop);
+            }
+            function initHeroField() {
+                hero.ctx = hero.cv.getContext('2d');
+                heroSize();
+                if (REDUCE) { heroDraw(performance.now()); return; }
+                new IntersectionObserver(es => es.forEach(e => hero.visible = e.isIntersecting)).observe(hero.cv);
+                requestAnimationFrame(heroLoop);
+            }
+            addEventListener('resize', () => { heroSize(); if (REDUCE) heroDraw(performance.now()); });
+            document.addEventListener('qps:theme', () => { if (REDUCE) heroDraw(performance.now()); });
+
+            /* ------------------------------- map ------------------------------- */
+            const map2 = { cv: $('mapCv'), ctx: null, W: 0, H: 0, dpr: 1, nodes: [], links: [], maxLayer: 26, mx: -1, my: -1, pulse: null, t0: performance.now(), visible: true };
+            function mapSize() {
+                if (!map2.ctx) return;
+                map2.dpr = Math.min(devicePixelRatio || 1, 2);
+                map2.W = map2.cv.clientWidth; map2.H = map2.cv.clientHeight;
+                map2.cv.width = Math.round(map2.W * map2.dpr);
+                map2.cv.height = Math.round(map2.H * map2.dpr);
+                if (personas.length) mapLayout();
+            }
+            function railX(layer) { const pad = 34; return pad + (layer / map2.maxLayer) * (map2.W - pad * 2); }
+            function mapLayout() {
+                map2.maxLayer = Math.max.apply(null, personas.map(p => p.layer));
+                map2.nodes = personas.map(p => ({
+                    layer: p.layer, n: p.neuron, name: p.name, scr: !!p.screening, lit: !!p.screening,
+                    x: railX(p.layer) + (((p.neuron * 7) % 97) / 97 - .5) * 14,
+                    y: map2.H * (.13 + .74 * ((p.neuron % 1000) / 1000)),
+                    ph: (p.neuron * 83 % 628) / 100,
+                }));
+                map2.links = [];
+                const maxD = Math.max(map2.W / 18, 56);
+                for (let i = 0; i < map2.nodes.length; i++) {
+                    const cand = [];
+                    for (let j = i + 1; j < map2.nodes.length; j++) {
+                        const dx = map2.nodes[i].x - map2.nodes[j].x, dy = map2.nodes[i].y - map2.nodes[j].y;
+                        const d2 = dx * dx + dy * dy;
+                        if (d2 < maxD * maxD) cand.push([j, d2]);
+                    }
+                    cand.sort((a, b) => a[1] - b[1]);
+                    for (let k = 0; k < Math.min(2, cand.length); k++) map2.links.push([i, cand[k][0]]);
+                }
+            }
+            function mapDraw(now) {
+                const c = map2.ctx, P = pal(), W = map2.W, H = map2.H, t = now / 1000;
+                c.setTransform(map2.dpr, 0, 0, map2.dpr, 0, 0);
+                c.clearRect(0, 0, W, H);
+                // layer rails + labels
+                c.font = '500 10px "IBM Plex Mono", monospace';
+                c.textAlign = 'center';
+                for (let l = 0; l <= map2.maxLayer; l++) {
+                    const x = railX(l);
+                    c.strokeStyle = l % 4 === 0 ? P.railA : P.railB;
+                    c.lineWidth = 1;
+                    c.beginPath(); c.moveTo(x, 8); c.lineTo(x, H - 26); c.stroke();
+                    if (l % 4 === 0) { c.fillStyle = P.railLbl; c.fillText('L' + l, x, H - 10); }
+                }
+                c.lineWidth = 1;
+                for (const [a, b] of map2.links) {
+                    const A = map2.nodes[a], B = map2.nodes[b];
+                    c.strokeStyle = P.link;
+                    c.beginPath(); c.moveTo(A.x, A.y); c.lineTo(B.x, B.y); c.stroke();
+                }
+                for (const d of map2.nodes) {
+                    const br = REDUCE ? 1 : (.72 + .28 * Math.sin(t * 1.3 + d.ph));
+                    c.fillStyle = d.lit ? 'rgba(' + P.accent + ',' + Math.min(1, .72 * br + .22).toFixed(3) + ')'
+                                        : 'rgba(' + P.dim + ',' + (.28 * br).toFixed(3) + ')';
+                    const w = d.lit ? 4 : 3, h = d.lit ? 9 : 7;
+                    c.fillRect(d.x - w / 2, d.y - h / 2, w, h);
+                }
+                if (map2.pulse) {
+                    const A = map2.nodes[map2.pulse.a], B = map2.nodes[map2.pulse.b];
+                    const p = (t - map2.pulse.start) / 1.6;
+                    if (p > 0 && p < 1) {
+                        const px = A.x + (B.x - A.x) * p, py = A.y + (B.y - A.y) * p;
+                        c.globalAlpha = Math.sin(p * Math.PI);
+                        c.fillStyle = P.pulse;
+                        c.beginPath(); c.arc(px, py, 3, 0, Math.PI * 2); c.fill();
+                        c.globalAlpha = 1;
+                    } else {
+                        const li = map2.links[Math.floor(Math.random() * map2.links.length)];
+                        map2.pulse = { a: li[0], b: li[1], start: t + .6 };
+                    }
+                }
+                /* probe tooltip */
+                if (map2.mx >= 0 && map2.nodes.length) {
+                    let best = null, bd = 46 * 46;
+                    for (const d of map2.nodes) {
+                        const dx = d.x - map2.mx, dy = d.y - map2.my, dd = dx * dx + dy * dy;
+                        if (dd < bd) { bd = dd; best = d; }
+                    }
+                    if (best) {
+                        const edgeLit = 'rgba(' + P.accent + ',.8)', edgeDim = 'rgba(' + P.dim + ',.35)';
+                        c.strokeStyle = best.lit ? edgeLit : edgeDim;
+                        c.lineWidth = 1.2;
+                        c.beginPath(); c.arc(best.x, best.y, 8, 0, Math.PI * 2); c.stroke();
+                        c.beginPath();
+                        c.moveTo(best.x - 12, best.y); c.lineTo(best.x - 9, best.y);
+                        c.moveTo(best.x + 9, best.y); c.lineTo(best.x + 12, best.y);
+                        c.moveTo(best.x, best.y - 12); c.lineTo(best.x, best.y - 9);
+                        c.moveTo(best.x, best.y + 9); c.lineTo(best.x, best.y + 12);
+                        c.stroke();
+                        const label = (best.scr ? '\u2713 ' : '') + best.name + ' \u00b7 L' + best.layer + '\u00b7N' + best.n;
+                        c.font = '600 10.5px "IBM Plex Mono", monospace';
+                        c.textAlign = 'left';
+                        const tw = c.measureText(label).width;
+                        let lx = best.x + 14;
+                        if (lx + tw > W - 10) lx = best.x - 14 - tw;
+                        const ly = best.y - 12 < 16 ? best.y + 20 : best.y - 12;
+                        c.fillStyle = P.tipBg;
+                        c.fillRect(lx - 5, ly - 11, tw + 10, 17);
+                        c.strokeStyle = best.lit ? edgeLit : edgeDim;
+                        c.strokeRect(lx - 5, ly - 11, tw + 10, 17);
+                        c.fillStyle = best.lit ? P.tipName : P.tipDim;
+                        c.fillText(label, lx, ly + 1);
+                    }
+                }
+            }
+            function mapLoop(now) {
+                map2.t0 = now;
+                if (map2.visible && map2.nodes.length) {
+                    if (!REDUCE && !map2.pulse && map2.links.length) {
+                        const li = map2.links[Math.floor(Math.random() * map2.links.length)];
+                        map2.pulse = { a: li[0], b: li[1], start: .5 };
+                    }
+                    mapDraw(now);
+                }
+                requestAnimationFrame(mapLoop);
+            }
+            function initMap() {
+                map2.ctx = map2.cv.getContext('2d');
+                mapSize();
+                map2.cv.addEventListener('mousemove', e => {
+                    const r = map2.cv.getBoundingClientRect();
+                    map2.mx = e.clientX - r.left; map2.my = e.clientY - r.top;
+                    if (REDUCE) mapDraw(performance.now());
+                });
+                map2.cv.addEventListener('mouseleave', () => {
+                    map2.mx = map2.my = -1;
+                    if (REDUCE) mapDraw(performance.now());
+                });
+                /* touch: tap to probe (no hover on phones) */
+                map2.cv.addEventListener('click', e => {
+                    const r = map2.cv.getBoundingClientRect();
+                    map2.mx = e.clientX - r.left; map2.my = e.clientY - r.top;
+                    if (REDUCE) mapDraw(performance.now());
+                });
+                if (REDUCE) { mapDraw(performance.now()); return; }
+                new IntersectionObserver(es => es.forEach(e => map2.visible = e.isIntersecting)).observe(map2.cv);
+                requestAnimationFrame(mapLoop);
+            }
+            addEventListener('resize', () => { mapSize(); if (REDUCE) mapDraw(performance.now()); });
+            document.addEventListener('qps:theme', () => { if (REDUCE) mapDraw(performance.now()); });
+
+            /* ------------------------------ copy ------------------------------ */
+            $('copyBtn').addEventListener('click', () => {
+                const pre = document.querySelector('.term pre');
+                navigator.clipboard.writeText(pre.textContent).then(() => {
+                    const b = $('copyBtn');
+                    b.textContent = 'Copied \u2713';
+                    setTimeout(() => b.textContent = 'Copy', 1600);
+                }).catch(() => {});
             });
-            cv.addEventListener('mouseleave', () => {
-                mx = my = -1;
-                if (reduce) draw(performance.now());
-            });
-            size(); addEventListener('resize', size);
-            if (reduce) draw(0); else requestAnimationFrame(draw);
         })();
     </script>
 </body>
